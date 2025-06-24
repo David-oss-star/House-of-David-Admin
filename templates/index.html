@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -19,33 +20,46 @@
         <h2>Add New Order</h2>
         <form id="orderForm">
           <div class="form-group">
-            <label for="customerName">Customer Name:</label>
-            <input type="text" id="customerName" required />
+            <label for="customerId">Customer (select or add new):</label>
+            <select id="customerId" required>
+              <!-- Options will be loaded dynamically by JavaScript -->
+              <option value="">Select Existing Customer</option>
+            </select>
+            <button
+              type="button"
+              class="btn secondary small-btn"
+              id="addCustomerBtn"
+            >
+              Add New Customer
+            </button>
           </div>
-          <div class="form-group">
-            <label for="whatsappNumber">WhatsApp Number:</label>
+          <div class="form-group" id="newCustomerFields" style="display: none">
+            <h3>New Customer Details:</h3>
+            <label for="newCustomerName">Name:</label>
+            <input type="text" id="newCustomerName" />
+            <label for="newWhatsappNumber">WhatsApp Number:</label>
             <input
               type="tel"
-              id="whatsappNumber"
+              id="newWhatsappNumber"
               placeholder="+232 7X XXX XXX"
-              required
             />
+            <label for="newDeliveryAddress">Delivery Address:</label>
+            <textarea id="newDeliveryAddress" rows="2"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="bundleId">Bundle Type:</label>
+            <select id="bundleId" required>
+              <option value="">Select Bundle</option>
+              <!-- Options will be loaded dynamically by JavaScript -->
+            </select>
           </div>
           <div class="form-group">
-            <label for="deliveryAddress">Delivery Address:</label>
-            <textarea id="deliveryAddress" rows="2" required></textarea>
-          </div>
-          <div class="form-group">
-            <label for="bundleType">Bundle Type:</label>
-            <input
-              type="text"
-              id="bundleType"
-              placeholder="e.g., Gravy Bundle"
-            />
-          </div>
-          <div class="form-group">
-            <label for="addOns">Add-ons (Optional):</label>
-            <input type="text" id="addOns" placeholder="e.g., Chicken, Crab" />
+            <label for="addOnsIds">Add-ons (Optional):</label>
+            <select id="addOnsIds" multiple size="3">
+              <!-- Options will be loaded dynamically by JavaScript -->
+            </select>
+            <small>Hold Ctrl/Cmd to select multiple</small>
           </div>
           <div class="form-group">
             <label for="totalPrice">Total Price (Le):</label>
@@ -68,7 +82,7 @@
           <input
             type="text"
             id="searchInput"
-            placeholder="Search by name, number, or address..."
+            placeholder="Search customer, number, address..."
           />
           <select id="statusFilter">
             <option value="All">All Statuses</option>
@@ -78,12 +92,12 @@
             <option value="Packed">Packed</option>
             <option value="Out for Delivery">Out for Delivery</option>
             <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
           </select>
-          <input
-            type="text"
-            id="agentFilter"
-            placeholder="Filter by agent ID..."
-          />
+          <select id="agentFilter">
+            <option value="All">All Agents</option>
+            <!-- Options will be loaded dynamically by JavaScript -->
+          </select>
         </div>
         <div class="table-container">
           <table id="ordersTable">
@@ -98,7 +112,7 @@
                 <th>Price (Le)</th>
                 <th>Payment Status</th>
                 <th>Order Status</th>
-                <th>Agent ID</th>
+                <th>Agent</th>
                 <th>Order Time</th>
                 <th>Delivery Time</th>
                 <th>Actions</th>
@@ -112,6 +126,42 @@
         <p id="noOrdersMessage" style="display: none">
           No orders found matching your criteria.
         </p>
+      </section>
+
+      <section class="inventory-status">
+        <h2>Inventory Status</h2>
+        <div class="table-container">
+          <table id="ingredientsTable">
+            <thead>
+              <tr>
+                <th>Ingredient</th>
+                <th>Current Stock</th>
+                <th>Unit</th>
+                <th>Reorder Point</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Ingredients will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="reporting">
+        <h2>Reports</h2>
+        <button class="btn primary" id="generateDailySummary">
+          Generate Daily Summary
+        </button>
+        <div id="dailySummaryOutput" class="report-output"></div>
+        <button class="btn primary" id="generateSalesByBundle">
+          Generate Sales by Bundle (Last 30 Days)
+        </button>
+        <div id="salesByBundleOutput" class="report-output"></div>
+        <button class="btn primary" id="generateAgentPerformance">
+          Generate Agent Performance (Last 30 Days)
+        </button>
+        <div id="agentPerformanceOutput" class="report-output"></div>
       </section>
     </div>
 
