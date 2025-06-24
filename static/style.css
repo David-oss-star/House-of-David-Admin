@@ -37,7 +37,8 @@ body {
 /* Header Styling */
 header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
+    /* Reduced margin to make space for nav */
     padding-bottom: 20px;
     border-bottom: 1px solid #eee;
 }
@@ -54,13 +55,77 @@ header p {
     color: #666;
 }
 
+/* Main Navigation Styling */
+.main-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    /* Allow wrapping on smaller screens */
+    gap: 10px;
+    /* Space between buttons */
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: #e9ecef;
+    /* Light grey background for nav */
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.nav-link {
+    background-color: #f8f9fa;
+    /* Lighter button background */
+    color: #007bff;
+    /* Text color matching brand */
+    padding: 10px 20px;
+    border: 1px solid #007bff;
+    /* Blue border */
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    flex-grow: 1;
+    /* Allow buttons to grow */
+    text-align: center;
+    max-width: 250px;
+    /* Max width for individual buttons */
+}
+
+.nav-link:hover {
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.nav-link.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+    cursor: default;
+    /* No hover effect when active */
+    transform: translateY(0);
+}
+
+.nav-link.active:hover {
+    background-color: #007bff;
+    /* Stays blue when active and hovered */
+    color: white;
+}
+
 /* Section Styling */
-section {
+.content-section {
     margin-bottom: 40px;
     background-color: #fcfcfc;
     border-radius: 8px;
     padding: 25px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Class to hide sections initially or when not active */
+.hidden {
+    display: none;
 }
 
 section h2 {
@@ -107,6 +172,15 @@ section h2 {
 textarea {
     resize: vertical;
     /* Allow vertical resizing */
+}
+
+.form-group .small-btn {
+    padding: 6px 12px;
+    /* Smaller padding for button next to select */
+    font-size: 0.9em;
+    margin-left: 10px;
+    vertical-align: middle;
+    /* Align with select/input */
 }
 
 /* Buttons */
@@ -164,7 +238,8 @@ textarea {
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.02);
 }
 
-#ordersTable {
+#ordersTable,
+#ingredientsTable {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
@@ -172,7 +247,8 @@ textarea {
     /* Ensure table is readable on smaller screens by giving min-width */
 }
 
-#ordersTable thead th {
+#ordersTable thead th,
+#ingredientsTable thead th {
     background-color: #007bff;
     color: white;
     padding: 12px 15px;
@@ -183,19 +259,23 @@ textarea {
     border-bottom: 1px solid #0056b3;
 }
 
-#ordersTable tbody tr {
+#ordersTable tbody tr,
+#ingredientsTable tbody tr {
     border-bottom: 1px solid #eee;
 }
 
-#ordersTable tbody tr:nth-child(even) {
+#ordersTable tbody tr:nth-child(even),
+#ingredientsTable tbody tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
-#ordersTable tbody tr:hover {
+#ordersTable tbody tr:hover,
+#ingredientsTable tbody tr:hover {
     background-color: #eaf6ff;
 }
 
-#ordersTable tbody td {
+#ordersTable tbody td,
+#ingredientsTable tbody td {
     padding: 10px 15px;
     vertical-align: top;
     /* Align content to the top */
@@ -245,6 +325,13 @@ textarea {
 }
 
 /* Dark Green */
+.status-Cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+    font-weight: bold;
+}
+
+/* Light Red for Cancelled */
 .status-Pending {
     background-color: #fdfd96;
     color: #7f7f00;
@@ -252,6 +339,18 @@ textarea {
 }
 
 /* Light Yellow */
+
+.status-low-stock {
+    background-color: #f8d7da;
+    color: #721c24;
+    font-weight: bold;
+}
+
+.status-sufficient-stock {
+    background-color: #d4edda;
+    color: #155724;
+    font-weight: bold;
+}
 
 
 /* Filter Controls */
@@ -282,6 +381,31 @@ td select {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 0.9em;
+}
+
+/* Report output */
+.report-output {
+    background-color: #e9ecef;
+    border-left: 5px solid #007bff;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+    display: none;
+    /* Hidden by default */
+}
+
+.report-output h3 {
+    margin-top: 0;
+    color: #0056b3;
+}
+
+.report-output ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.report-output li {
+    margin-bottom: 5px;
 }
 
 /* Responsive adjustments */
@@ -329,9 +453,22 @@ td select {
     }
 
     #ordersTable thead th,
-    #ordersTable tbody td {
+    #ordersTable tbody td,
+    #ingredientsTable thead th,
+    #ingredientsTable tbody td {
         font-size: 0.85em;
         padding: 8px 10px;
+    }
+
+    .main-nav {
+        flex-direction: column;
+        /* Stack nav items vertically on small screens */
+        gap: 8px;
+    }
+
+    .nav-link {
+        max-width: unset;
+        /* Allow nav links to take full width */
     }
 }
 

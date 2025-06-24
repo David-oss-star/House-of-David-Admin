@@ -16,7 +16,20 @@
         <p>Your Gateway to the Good Life - Order Management System</p>
       </header>
 
-      <section class="add-order">
+      <nav class="main-nav">
+        <button class="nav-link active" data-target="orders-list-section">
+          View Orders
+        </button>
+        <button class="nav-link" data-target="add-order-section">
+          Add New Order
+        </button>
+        <button class="nav-link" data-target="inventory-section">
+          Inventory Status
+        </button>
+        <button class="nav-link" data-target="reports-section">Reports</button>
+      </nav>
+
+      <section id="add-order-section" class="content-section hidden">
         <h2>Add New Order</h2>
         <form id="orderForm">
           <div class="form-group">
@@ -76,7 +89,7 @@
         </form>
       </section>
 
-      <section class="order-list">
+      <section id="orders-list-section" class="content-section">
         <h2>All Orders</h2>
         <div class="filter-controls">
           <input
@@ -128,7 +141,7 @@
         </p>
       </section>
 
-      <section class="inventory-status">
+      <section id="inventory-section" class="content-section hidden">
         <h2>Inventory Status</h2>
         <div class="table-container">
           <table id="ingredientsTable">
@@ -148,7 +161,7 @@
         </div>
       </section>
 
-      <section class="reporting">
+      <section id="reports-section" class="content-section hidden">
         <h2>Reports</h2>
         <button class="btn primary" id="generateDailySummary">
           Generate Daily Summary

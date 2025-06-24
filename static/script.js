@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateAgentPerformanceBtn = document.getElementById('generateAgentPerformance');
     const agentPerformanceOutput = document.getElementById('agentPerformanceOutput');
 
+    // Navigation elements
+    const navLinks = document.querySelectorAll('.nav-link');
+    const contentSections = document.querySelectorAll('.content-section');
 
     let allOrders = []; // Cached full order data
     let allCustomers = []; // Cached full customer data
@@ -40,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const msgDiv = document.createElement('div');
         msgDiv.className = `alert ${type}`; // Add styling based on type (info, success, error)
         msgDiv.textContent = message;
+        // Find existing alerts and remove them to avoid stacking too many
+        document.querySelectorAll('.alert').forEach(alert => alert.remove());
         document.body.prepend(msgDiv); // Add to top of body
         setTimeout(() => msgDiv.remove(), 5000); // Remove after 5 seconds
     }
@@ -80,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 addOnsIdsSelect.appendChild(option);
             });
 
-            // Fetch Agents for Filter
+            // Fetch Agents for Filter and Assignment
             const agentResponse = await fetch('/api/deliveries/agents');
             allAgents = await agentResponse.json();
             agentFilterSelect.innerHTML = '<option value="All">All Agents</option>';
@@ -200,7 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         let customerId;
-        if (newCustomerFields.style.display === 'block') {
+        // Check if new customer fields are visible
+        const isAddingNewCustomer = newCustomerFields.style.display === 'block';
+
+        if (isAddingNewCustomer) {
             // Create new customer first
             const newCustomer = {
                 name: newCustomerNameInput.value.trim(),
@@ -265,14 +273,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             orderForm.reset();
-            newCustomerFields.style.display = 'none'; // Hide new customer fields
+            // Reset new customer fields visibility and required attributes
+            newCustomerFields.style.display = 'none';
             newCustomerNameInput.required = false;
             newWhatsappNumberInput.required = false;
             newDeliveryAddressInput.required = false;
-            customerIdSelect.required = true;
+            customerIdSelect.required = true; // Ensure select is required again
 
             showMessage('Order added successfully!', 'success');
             fetchAndRenderOrders(); // Refresh order list
+            // Optionally switch to the orders list tab after adding
+            switchTab('orders-list-section');
         } catch (error) {
             console.error('Error adding order:', error);
             showMessage(`Failed to add order: ${error.message}`, 'error');
@@ -510,8 +521,43 @@ document.addEventListener('DOMContentLoaded', () => {
     generateAgentPerformanceBtn.addEventListener('click', () => generateReport('agent-performance', 'agentPerformanceOutput'));
 
 
+    // --- Navigation Logic ---
+    navLinks.forEach(link => {
+        link.addEventListener('click', (event) => {
+            // Remove 'active' class from all links and 'hidden' from all sections
+            navLinks.forEach(l => l.classList.remove('active'));
+            contentSections.forEach(section => section.classList.add('hidden'));
+
+            // Add 'active' class to the clicked link
+            event.target.classList.add('active');
+
+            // Show the target section
+            const targetId = event.target.dataset.target;
+            document.getElementById(targetId).classList.remove('hidden');
+
+            // Optionally, trigger data refresh for the active tab if needed
+            if (targetId === 'orders-list-section') {
+                fetchAndRenderOrders();
+            } else if (targetId === 'inventory-section') {
+                fetchAndRenderIngredients();
+            }
+            // Reports typically generate on demand, so no immediate refresh here
+            // Add Order form dropdowns are populated on initial load
+        });
+    });
+
+    // Function to programmatically switch tabs
+    function switchTab(targetId) {
+        navLinks.forEach(link => {
+            if (link.dataset.target === targetId) {
+                link.click(); // Simulate a click on the desired tab
+            }
+        });
+    }
+
+
     // --- Initial Load ---
     populateFormDropdowns();
-    fetchAndRenderOrders();
-    fetchAndRenderIngredients();
+    fetchAndRenderOrders(); // Initial load for default tab
+    // Other sections will be loaded when their tabs are clicked
 });
