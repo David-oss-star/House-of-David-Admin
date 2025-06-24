@@ -169,6 +169,16 @@ section h2 {
     outline: none;
 }
 
+/* Readonly input style */
+input[readonly] {
+    background-color: #e9ecef;
+    /* Light gray background */
+    cursor: not-allowed;
+    color: #555;
+    font-weight: bold;
+}
+
+
 textarea {
     resize: vertical;
     /* Allow vertical resizing */
@@ -182,6 +192,74 @@ textarea {
     vertical-align: middle;
     /* Align with select/input */
 }
+
+.customer-input-row {
+    display: flex;
+    gap: 10px;
+    /* Space between select and button */
+    align-items: center;
+}
+
+.customer-input-row select {
+    flex-grow: 1;
+    /* Allow select to take available space */
+}
+
+.form-note {
+    font-size: 0.85em;
+    color: #777;
+    margin-top: 5px;
+    margin-left: 5px;
+}
+
+/* Add-ons Checkbox Styling */
+.add-ons-checkboxes {
+    display: grid;
+    /* Use CSS Grid for a clean, responsive layout */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    /* Auto-fit columns, min 180px */
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+}
+
+.add-ons-checkboxes label {
+    display: flex;
+    /* Use flexbox for checkbox and text alignment */
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+    /* Override bold from general label style */
+    color: #333;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.add-ons-checkboxes label:hover {
+    background-color: #e6f2ff;
+    /* Light blue on hover */
+}
+
+.add-ons-checkboxes input[type="checkbox"] {
+    margin-right: 8px;
+    width: auto;
+    /* Revert width:100% from general input style */
+    vertical-align: middle;
+    transform: scale(1.2);
+    /* Slightly larger checkbox */
+}
+
+.no-addons-message {
+    grid-column: 1 / -1;
+    /* Span across all columns */
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
+
 
 /* Buttons */
 .btn {
@@ -239,7 +317,9 @@ textarea {
 }
 
 #ordersTable,
-#ingredientsTable {
+#ingredientsTable,
+#customersTable,
+#modalCustomerOrdersTable {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
@@ -248,7 +328,9 @@ textarea {
 }
 
 #ordersTable thead th,
-#ingredientsTable thead th {
+#ingredientsTable thead th,
+#customersTable thead th,
+#modalCustomerOrdersTable thead th {
     background-color: #007bff;
     color: white;
     padding: 12px 15px;
@@ -260,22 +342,30 @@ textarea {
 }
 
 #ordersTable tbody tr,
-#ingredientsTable tbody tr {
+#ingredientsTable tbody tr,
+#customersTable tbody tr,
+#modalCustomerOrdersTable tbody tr {
     border-bottom: 1px solid #eee;
 }
 
 #ordersTable tbody tr:nth-child(even),
-#ingredientsTable tbody tr:nth-child(even) {
+#ingredientsTable tbody tr:nth-child(even),
+#customersTable tbody tr:nth-child(even),
+#modalCustomerOrdersTable tbody tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
 #ordersTable tbody tr:hover,
-#ingredientsTable tbody tr:hover {
+#ingredientsTable tbody tr:hover,
+#customersTable tbody tr:hover,
+#modalCustomerOrdersTable tbody tr:hover {
     background-color: #eaf6ff;
 }
 
 #ordersTable tbody td,
-#ingredientsTable tbody td {
+#ingredientsTable tbody td,
+#customersTable tbody td,
+#modalCustomerOrdersTable tbody td {
     padding: 10px 15px;
     vertical-align: top;
     /* Align content to the top */
@@ -408,6 +498,170 @@ td select {
     margin-bottom: 5px;
 }
 
+/* Dashboard Metrics */
+.dashboard-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.metric-card {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card h3 {
+    color: #007bff;
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    border-bottom: none;
+    /* Override section h2 border */
+    padding-bottom: 0;
+}
+
+.metric-value {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #333;
+}
+
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    /* Stay in place */
+    z-index: 1000;
+    /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    /* Full width */
+    height: 100%;
+    /* Full height */
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.6);
+    /* Black w/ opacity */
+    display: flex;
+    /* Use flexbox for centering */
+    align-items: center;
+    /* Center vertically */
+    justify-content: center;
+    /* Center horizontally */
+    padding: 20px;
+    /* Padding around the content */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    max-width: 900px;
+    /* Max width for modal content */
+    width: 100%;
+    /* Fluid width */
+    max-height: 90vh;
+    /* Max height to prevent overflow on small screens */
+    overflow-y: auto;
+    /* Enable scrolling within the modal content */
+}
+
+.modal-content h2 {
+    color: #007bff;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+}
+
+.modal-content h3.customer-order-history-title {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+}
+
+.modal .close-button {
+    color: #aaa;
+    float: right;
+    font-size: 36px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+    line-height: 1;
+    /* Align 'x' properly */
+}
+
+.modal .close-button:hover,
+.modal .close-button:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+/* Customer Info Display in Modal */
+.customer-info-display p {
+    margin-bottom: 8px;
+    font-size: 1em;
+}
+
+.customer-info-display p strong {
+    color: #555;
+    display: inline-block;
+    /* For consistent alignment */
+    width: 120px;
+    /* Fixed width for labels */
+}
+
+/* Customer Editable Fields in Modal */
+.customer-editable-fields {
+    background-color: #e9ecef;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 25px;
+    border: 1px solid #ddd;
+}
+
+.customer-editable-fields h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #0056b3;
+    font-size: 1.2em;
+    border-bottom: 1px solid #cce5ff;
+    padding-bottom: 8px;
+}
+
+.customer-editable-fields .form-group {
+    margin-bottom: 10px;
+}
+
+.customer-editable-fields label {
+    font-weight: normal;
+    /* Override general bold */
+}
+
+.customer-editable-fields input[type="text"],
+.customer-editable-fields textarea {
+    background-color: #fff;
+}
+
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     body {
@@ -455,7 +709,11 @@ td select {
     #ordersTable thead th,
     #ordersTable tbody td,
     #ingredientsTable thead th,
-    #ingredientsTable tbody td {
+    #ingredientsTable tbody td,
+    #customersTable thead th,
+    #customersTable tbody td,
+    #modalCustomerOrdersTable thead th,
+    #modalCustomerOrdersTable tbody td {
         font-size: 0.85em;
         padding: 8px 10px;
     }
@@ -469,6 +727,42 @@ td select {
     .nav-link {
         max-width: unset;
         /* Allow nav links to take full width */
+    }
+
+    .customer-input-row {
+        flex-direction: column;
+        /* Stack customer select and button */
+        gap: 8px;
+        align-items: stretch;
+    }
+
+    .customer-input-row select,
+    .customer-input-row button {
+        width: 100%;
+        margin-left: 0;
+        /* Remove previous margin */
+    }
+
+    .dashboard-metrics {
+        grid-template-columns: 1fr;
+        /* Stack dashboard cards on small screens */
+    }
+
+    .modal-content {
+        padding: 20px;
+        max-width: 95%;
+        /* Adjust for very small screens */
+    }
+
+    .customer-info-display p strong {
+        width: 90px;
+        /* Smaller fixed width for labels in modal on small screens */
+    }
+
+    .modal .close-button {
+        font-size: 30px;
+        top: 5px;
+        right: 10px;
     }
 }
 
@@ -490,7 +784,11 @@ td select {
 @media (max-width: 600px) {
 
     #ordersTable th:first-child,
-    #ordersTable td:first-child {
+    #ordersTable td:first-child,
+    #customersTable th:first-child,
+    #customersTable td:first-child,
+    #modalCustomerOrdersTable th:first-child,
+    #modalCustomerOrdersTable tbody td:first-child {
         display: none;
     }
 }

@@ -17,11 +17,17 @@
       </header>
 
       <nav class="main-nav">
-        <button class="nav-link active" data-target="orders-list-section">
+        <button class="nav-link active" data-target="dashboard-section">
+          Dashboard
+        </button>
+        <button class="nav-link" data-target="orders-list-section">
           View Orders
         </button>
         <button class="nav-link" data-target="add-order-section">
           Add New Order
+        </button>
+        <button class="nav-link" data-target="customers-list-section">
+          Customers
         </button>
         <button class="nav-link" data-target="inventory-section">
           Inventory Status
@@ -32,19 +38,21 @@
       <section id="add-order-section" class="content-section hidden">
         <h2>Add New Order</h2>
         <form id="orderForm">
-          <div class="form-group">
-            <label for="customerId">Customer (select or add new):</label>
-            <select id="customerId" required>
-              <!-- Options will be loaded dynamically by JavaScript -->
-              <option value="">Select Existing Customer</option>
-            </select>
-            <button
-              type="button"
-              class="btn secondary small-btn"
-              id="addCustomerBtn"
-            >
-              Add New Customer
-            </button>
+          <div class="form-group customer-selection-group">
+            <label for="customerId">Customer:</label>
+            <div class="customer-input-row">
+              <select id="customerId" required>
+                <!-- Options will be loaded dynamically by JavaScript -->
+                <option value="">Select Existing Customer</option>
+              </select>
+              <button
+                type="button"
+                class="btn secondary small-btn"
+                id="toggleNewCustomerFieldsBtn"
+              >
+                Toggle New Customer Fields
+              </button>
+            </div>
           </div>
           <div class="form-group" id="newCustomerFields" style="display: none">
             <h3>New Customer Details:</h3>
@@ -58,6 +66,13 @@
             />
             <label for="newDeliveryAddress">Delivery Address:</label>
             <textarea id="newDeliveryAddress" rows="2"></textarea>
+            <button type="button" class="btn primary" id="saveNewCustomerBtn">
+              Save New Customer
+            </button>
+            <p class="form-note">
+              Save new customer first, then select them from the dropdown above
+              to proceed with the order.
+            </p>
           </div>
 
           <div class="form-group">
@@ -68,15 +83,25 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="addOnsIds">Add-ons (Optional):</label>
-            <select id="addOnsIds" multiple size="3">
-              <!-- Options will be loaded dynamically by JavaScript -->
-            </select>
-            <small>Hold Ctrl/Cmd to select multiple</small>
+            <label for="addOnsContainer">Add-ons (Optional):</label>
+            <div id="addOnsContainer" class="add-ons-checkboxes">
+              <!-- Checkboxes will be dynamically inserted here -->
+              <p class="no-addons-message">No add-ons available.</p>
+            </div>
           </div>
           <div class="form-group">
             <label for="totalPrice">Total Price (Le):</label>
-            <input type="number" id="totalPrice" step="0.01" required />
+            <input
+              type="number"
+              id="totalPrice"
+              step="0.01"
+              value="0.00"
+              readonly
+              required
+            />
+            <p class="form-note">
+              Price calculated automatically based on selections.
+            </p>
           </div>
           <div class="form-group">
             <label for="paymentStatus">Payment Status:</label>
@@ -89,7 +114,7 @@
         </form>
       </section>
 
-      <section id="orders-list-section" class="content-section">
+      <section id="orders-list-section" class="content-section hidden">
         <h2>All Orders</h2>
         <div class="filter-controls">
           <input
@@ -141,6 +166,39 @@
         </p>
       </section>
 
+      <section id="customers-list-section" class="content-section hidden">
+        <h2>Customer Directory</h2>
+        <div class="filter-controls">
+          <input
+            type="text"
+            id="customerSearchInput"
+            placeholder="Search customer name or number..."
+          />
+        </div>
+        <div class="table-container">
+          <table id="customersTable">
+            <thead>
+              <tr>
+                <th>Customer ID</th>
+                <th>Name</th>
+                <th>WhatsApp Number</th>
+                <th>Delivery Address</th>
+                <th>Email</th>
+                <th>Total Orders</th>
+                <th>Last Order Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Customer rows will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </div>
+        <p id="noCustomersMessage" style="display: none">
+          No customers found matching your criteria.
+        </p>
+      </section>
+
       <section id="inventory-section" class="content-section hidden">
         <h2>Inventory Status</h2>
         <div class="table-container">
@@ -176,6 +234,93 @@
         </button>
         <div id="agentPerformanceOutput" class="report-output"></div>
       </section>
+
+      <section id="dashboard-section" class="content-section hidden">
+        <h2>Dashboard Overview</h2>
+        <div class="dashboard-metrics">
+          <div class="metric-card">
+            <h3>Grand Total Sales</h3>
+            <p id="grandTotalSales" class="metric-value">Le 0.00</p>
+          </div>
+          <div class="metric-card">
+            <h3>Total Orders (All Time)</h3>
+            <p id="totalOrdersAllTime" class="metric-value">0</p>
+          </div>
+          <div class="metric-card">
+            <h3>Customers Registered</h3>
+            <p id="totalCustomers" class="metric-value">0</p>
+          </div>
+          <!-- More metrics can be added here -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Customer Details Modal -->
+    <div id="customerDetailsModal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Customer Details</h2>
+        <div class="customer-info-display">
+          <p><strong>Name:</strong> <span id="modalCustomerName"></span></p>
+          <p>
+            <strong>WhatsApp:</strong> <span id="modalCustomerWhatsapp"></span>
+          </p>
+          <p>
+            <strong>Address:</strong> <span id="modalCustomerAddress"></span>
+          </p>
+          <p><strong>Email:</strong> <span id="modalCustomerEmail"></span></p>
+          <p>
+            <strong>Total Orders:</strong>
+            <span id="modalCustomerTotalOrders"></span>
+          </p>
+          <p>
+            <strong>Last Order:</strong>
+            <span id="modalCustomerLastOrder"></span>
+          </p>
+        </div>
+
+        <div class="customer-editable-fields">
+          <h3>Editable Information</h3>
+          <div class="form-group">
+            <label for="modalCustomerDiscounts">Discounts/Loyalty:</label>
+            <input type="text" id="modalCustomerDiscounts" />
+          </div>
+          <div class="form-group">
+            <label for="modalCustomerSpecialMessage"
+              >Special Message/Notes:</label
+            >
+            <textarea id="modalCustomerSpecialMessage" rows="3"></textarea>
+          </div>
+          <button class="btn primary" id="saveCustomerDetailsBtn">
+            Save Changes
+          </button>
+        </div>
+
+        <h3 class="customer-order-history-title">Order History</h3>
+        <div class="table-container customer-order-history-table">
+          <table id="modalCustomerOrdersTable">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Bundle</th>
+                <th>Add-ons</th>
+                <th>Price (Le)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Customer specific orders will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </div>
+        <p
+          id="noCustomerOrdersMessage"
+          style="display: none; text-align: center; color: #777"
+        >
+          No orders found for this customer.
+        </p>
+      </div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

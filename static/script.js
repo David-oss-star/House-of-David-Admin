@@ -1,13 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const orderForm = document.getElementById('orderForm');
     const customerIdSelect = document.getElementById('customerId');
-    const addCustomerBtn = document.getElementById('addCustomerBtn');
+    const toggleNewCustomerFieldsBtn = document.getElementById('toggleNewCustomerFieldsBtn');
     const newCustomerFields = document.getElementById('newCustomerFields');
     const newCustomerNameInput = document.getElementById('newCustomerName');
     const newWhatsappNumberInput = document.getElementById('newWhatsappNumber');
     const newDeliveryAddressInput = document.getElementById('newDeliveryAddress');
+    const saveNewCustomerBtn = document.getElementById('saveNewCustomerBtn');
     const bundleIdSelect = document.getElementById('bundleId');
-    const addOnsIdsSelect = document.getElementById('addOnsIds');
+    const addOnsContainer = document.getElementById('addOnsContainer');
     const totalPriceInput = document.getElementById('totalPrice');
     const paymentStatusSelect = document.getElementById('paymentStatus');
 
@@ -16,6 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusFilter = document.getElementById('statusFilter');
     const agentFilterSelect = document.getElementById('agentFilter');
     const noOrdersMessage = document.getElementById('noOrdersMessage');
+
+    const customersTableBody = document.querySelector('#customersTable tbody');
+    const customerSearchInput = document.getElementById('customerSearchInput');
+    const noCustomersMessage = document.getElementById('noCustomersMessage');
 
     const ingredientsTableBody = document.querySelector('#ingredientsTable tbody');
 
@@ -26,27 +31,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateAgentPerformanceBtn = document.getElementById('generateAgentPerformance');
     const agentPerformanceOutput = document.getElementById('agentPerformanceOutput');
 
+    const grandTotalSalesElement = document.getElementById('grandTotalSales');
+    const totalOrdersAllTimeElement = document.getElementById('totalOrdersAllTime');
+    const totalCustomersElement = document.getElementById('totalCustomers');
+
+    // Modal elements
+    const customerDetailsModal = document.getElementById('customerDetailsModal');
+    const modalCloseButton = customerDetailsModal.querySelector('.close-button');
+    const modalCustomerName = document.getElementById('modalCustomerName');
+    const modalCustomerWhatsapp = document.getElementById('modalCustomerWhatsapp');
+    const modalCustomerAddress = document.getElementById('modalCustomerAddress');
+    const modalCustomerEmail = document.getElementById('modalCustomerEmail');
+    const modalCustomerTotalOrders = document.getElementById('modalCustomerTotalOrders');
+    const modalCustomerLastOrder = document.getElementById('modalCustomerLastOrder');
+    const modalCustomerDiscounts = document.getElementById('modalCustomerDiscounts');
+    const modalCustomerSpecialMessage = document.getElementById('modalCustomerSpecialMessage');
+    const saveCustomerDetailsBtn = document.getElementById('saveCustomerDetailsBtn');
+    const modalCustomerOrdersTableBody = document.querySelector('#modalCustomerOrdersTable tbody');
+    const noCustomerOrdersMessage = document.getElementById('noCustomerOrdersMessage');
+
+    // Store the ID of the customer currently open in the modal
+    let currentModalCustomerId = null;
+
+
     // Navigation elements
     const navLinks = document.querySelectorAll('.nav-link');
     const contentSections = document.querySelectorAll('.content-section');
 
-    let allOrders = []; // Cached full order data
-    let allCustomers = []; // Cached full customer data
-    let allBundles = []; // Cached full bundle data
-    let allAddOns = []; // Cached full add-on data
-    let allAgents = []; // Cached full agent data
-    let allIngredients = []; // Cached full ingredient data
+    let allOrders = [];
+    let allCustomers = [];
+    let allBundles = [];
+    let allAddOns = [];
+    let allAgents = [];
+    let allIngredients = [];
 
     // --- Helper Functions ---
 
     function showMessage(message, type = 'info') {
         const msgDiv = document.createElement('div');
-        msgDiv.className = `alert ${type}`; // Add styling based on type (info, success, error)
+        msgDiv.className = `alert ${type}`;
         msgDiv.textContent = message;
-        // Find existing alerts and remove them to avoid stacking too many
         document.querySelectorAll('.alert').forEach(alert => alert.remove());
-        document.body.prepend(msgDiv); // Add to top of body
-        setTimeout(() => msgDiv.remove(), 5000); // Remove after 5 seconds
+        document.body.prepend(msgDiv);
+        setTimeout(() => msgDiv.remove(), 5000);
     }
 
     // Function to fetch and populate dropdowns (Customers, Bundles, Add-ons, Agents)
@@ -73,17 +100,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 option.textContent = `${bundle.name} (Le ${bundle.base_price.toLocaleString()})`;
                 bundleIdSelect.appendChild(option);
             });
+            bundleIdSelect.removeEventListener('change', calculateTotalPrice);
+            bundleIdSelect.addEventListener('change', calculateTotalPrice);
 
-            // Fetch Add-ons
+
+            // Fetch Add-ons and create checkboxes
             const addOnResponse = await fetch('/api/inventory/add-ons');
             allAddOns = await addOnResponse.json();
-            addOnsIdsSelect.innerHTML = ''; // Clear previous options
-            allAddOns.forEach(addOn => {
-                const option = document.createElement('option');
-                option.value = addOn.id;
-                option.textContent = `${addOn.name} (Le ${addOn.price.toLocaleString()})`;
-                addOnsIdsSelect.appendChild(option);
-            });
+            addOnsContainer.innerHTML = '';
+            if (allAddOns.length === 0) {
+                addOnsContainer.innerHTML = '<p class="no-addons-message">No add-ons available.</p>';
+            } else {
+                allAddOns.forEach(addOn => {
+                    const addOnDiv = document.createElement('div');
+                    addOnDiv.classList.add('addon-item');
+                    addOnDiv.innerHTML = `
+                        <label>
+                            <input type="checkbox" name="addon" value="${addOn.id}" data-price="${addOn.price}">
+                            ${addOn.name} (Le ${addOn.price.toLocaleString()})
+                        </label>
+                    `;
+                    addOnsContainer.appendChild(addOnDiv);
+                });
+                addOnsContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.removeEventListener('change', calculateTotalPrice);
+                    checkbox.addEventListener('change', calculateTotalPrice);
+                });
+            }
+            calculateTotalPrice();
 
             // Fetch Agents for Filter and Assignment
             const agentResponse = await fetch('/api/deliveries/agents');
@@ -102,6 +146,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Function to calculate and display total price
+    function calculateTotalPrice() {
+        let total = 0;
+        const selectedBundleId = bundleIdSelect.value;
+        if (selectedBundleId) {
+            const bundle = allBundles.find(b => b.id === selectedBundleId);
+            if (bundle) {
+                total += bundle.base_price;
+            }
+        }
+
+        addOnsContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+            total += parseFloat(checkbox.dataset.price);
+        });
+
+        totalPriceInput.value = total.toFixed(2);
+    }
+
+
     // Function to fetch and render orders
     async function fetchAndRenderOrders() {
         try {
@@ -110,11 +173,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             allOrders = await response.json();
-            applyFilters(); // Apply current filters
+            applyFilters();
         } catch (error) {
             console.error('Error fetching orders:', error);
             ordersTableBody.innerHTML = '<tr><td colspan="13" style="text-align: center; color: red;">Failed to load orders. Please try again.</td></tr>';
-            noOrdersMessage.style.display = 'none'; // Hide if error
+            noOrdersMessage.style.display = 'none';
         }
     }
 
@@ -137,11 +200,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const orderTime = order.order_received_timestamp ? new Date(order.order_received_timestamp).toLocaleString() : 'N/A';
             const deliveryTime = order.delivery_timestamp ? new Date(order.delivery_timestamp).toLocaleString() : 'N/A';
             
-            // Get bundle and add-on names for display
             const bundleName = allBundles.find(b => b.id === order.bundle_id)?.name || 'N/A';
             const addOnsNames = (order.add_ons || [])
                 .map(id => allAddOns.find(ao => ao.id === id)?.name)
-                .filter(name => name) // Remove undefined names
+                .filter(name => name)
                 .join(', ') || 'None';
 
             row.innerHTML = `
@@ -184,18 +246,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Form Event Listeners ---
 
-    // Toggle New Customer Fields
-    addCustomerBtn.addEventListener('click', () => {
+    // Toggle New Customer Fields visibility
+    toggleNewCustomerFieldsBtn.addEventListener('click', () => {
         const isHidden = newCustomerFields.style.display === 'none';
         newCustomerFields.style.display = isHidden ? 'block' : 'none';
         newCustomerNameInput.required = isHidden;
         newWhatsappNumberInput.required = isHidden;
         newDeliveryAddressInput.required = isHidden;
-        if (!isHidden) {
-            customerIdSelect.value = ""; // Deselect existing customer if adding new
+        
+        if (isHidden) {
+            customerIdSelect.value = ""; 
             customerIdSelect.required = false;
         } else {
             customerIdSelect.required = true;
+            newCustomerNameInput.value = '';
+            newWhatsappNumberInput.value = '';
+            newDeliveryAddressInput.value = '';
+        }
+    });
+
+    // Handle saving a new customer
+    saveNewCustomerBtn.addEventListener('click', async () => {
+        const newCustomer = {
+            name: newCustomerNameInput.value.trim(),
+            whatsapp_number: newWhatsappNumberInput.value.trim(),
+            delivery_address: newDeliveryAddressInput.value.trim()
+        };
+
+        if (!newCustomer.name || !newCustomer.whatsapp_number || !newCustomer.delivery_address) {
+            showMessage('Please fill in all new customer details before saving.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/customers/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newCustomer)
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+            const createdCustomer = await response.json();
+            showMessage(`New customer "${createdCustomer.name}" saved!`, 'success');
+            
+            await populateFormDropdowns();
+            customerIdSelect.value = createdCustomer.id;
+            
+            newCustomerFields.style.display = 'none';
+            newCustomerNameInput.value = '';
+            newWhatsappNumberInput.value = '';
+            newDeliveryAddressInput.value = '';
+            newCustomerNameInput.required = false;
+            newWhatsappNumberInput.required = false;
+            newDeliveryAddressInput.required = false;
+            customerIdSelect.required = true;
+
+        } catch (error) {
+            console.error('Error saving new customer:', error);
+            showMessage(`Failed to save new customer: ${error.message}`, 'error');
         }
     });
 
@@ -204,51 +314,13 @@ document.addEventListener('DOMContentLoaded', () => {
     orderForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        let customerId;
-        // Check if new customer fields are visible
-        const isAddingNewCustomer = newCustomerFields.style.display === 'block';
-
-        if (isAddingNewCustomer) {
-            // Create new customer first
-            const newCustomer = {
-                name: newCustomerNameInput.value.trim(),
-                whatsapp_number: newWhatsappNumberInput.value.trim(),
-                delivery_address: newDeliveryAddressInput.value.trim()
-            };
-
-            if (!newCustomer.name || !newCustomer.whatsapp_number || !newCustomer.delivery_address) {
-                showMessage('Please fill in all new customer fields.', 'error');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/customers/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newCustomer)
-                });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-                }
-                const createdCustomer = await response.json();
-                customerId = createdCustomer.id;
-                showMessage(`New customer "${createdCustomer.name}" added!`, 'success');
-                await populateFormDropdowns(); // Refresh customer dropdown
-            } catch (error) {
-                console.error('Error adding new customer:', error);
-                showMessage(`Failed to add new customer: ${error.message}`, 'error');
-                return; // Stop if customer creation fails
-            }
-        } else {
-            customerId = customerIdSelect.value;
-            if (!customerId) {
-                showMessage('Please select an existing customer or add a new one.', 'error');
-                return;
-            }
+        const customerId = customerIdSelect.value;
+        if (!customerId) {
+            showMessage('Please select an existing customer or save a new one first.', 'error');
+            return;
         }
 
-        const selectedAddOns = Array.from(addOnsIdsSelect.selectedOptions).map(option => option.value);
+        const selectedAddOns = Array.from(addOnsContainer.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
         const newOrder = {
             customer_id: customerId,
@@ -257,6 +329,11 @@ document.addEventListener('DOMContentLoaded', () => {
             total_price: parseFloat(totalPriceInput.value),
             payment_status: paymentStatusSelect.value
         };
+
+        if (!newOrder.bundle_id) {
+            showMessage('Please select a bundle type.', 'error');
+            return;
+        }
 
         try {
             const response = await fetch('/api/orders/', {
@@ -273,16 +350,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             orderForm.reset();
-            // Reset new customer fields visibility and required attributes
+            addOnsContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+            calculateTotalPrice();
+            
             newCustomerFields.style.display = 'none';
             newCustomerNameInput.required = false;
             newWhatsappNumberInput.required = false;
             newDeliveryAddressInput.required = false;
-            customerIdSelect.required = true; // Ensure select is required again
+            customerIdSelect.required = true;
 
             showMessage('Order added successfully!', 'success');
-            fetchAndRenderOrders(); // Refresh order list
-            // Optionally switch to the orders list tab after adding
+            fetchAndRenderOrders();
             switchTab('orders-list-section');
         } catch (error) {
             console.error('Error adding order:', error);
@@ -315,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const confirmUpdate = confirm(`Are you sure you want to change the status of order ${orderId.substring(0, 8)}... to "${newStatus}"?`);
         
         if (!confirmUpdate) {
-            fetchAndRenderOrders(); // Revert dropdown
+            fetchAndRenderOrders();
             return;
         }
 
@@ -332,17 +410,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showMessage(`Order ${orderId.substring(0, 8)}... status updated to "${newStatus}"!`, 'success');
-            fetchAndRenderOrders(); // Re-render for updated data including timestamp
+            fetchAndRenderOrders();
         } catch (error) {
             console.error('Error updating order status:', error);
             showMessage(`Failed to update order status: ${error.message}`, 'error');
-            fetchAndRenderOrders(); // Re-fetch on error to ensure data consistency
+            fetchAndRenderOrders();
         }
     }
 
     async function handleAgentAssignment(event) {
         const orderId = event.target.dataset.orderId;
-        const newAgentId = event.target.value; // Can be empty string for "Unassigned"
+        const newAgentId = event.target.value;
 
         try {
             const response = await fetch(`/api/orders/${orderId}`, {
@@ -357,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showMessage(`Order ${orderId.substring(0, 8)}... agent updated!`, 'success');
-            fetchAndRenderOrders(); // Re-render to show updated agent name
+            fetchAndRenderOrders();
         } catch (error) {
             console.error('Error assigning agent:', error);
             showMessage(`Failed to assign agent: ${error.message}`, 'error');
@@ -392,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Filtering Logic ---
+    // --- Filtering Logic (Orders) ---
     function applyFilters() {
         let filteredOrders = allOrders;
 
@@ -422,10 +500,189 @@ document.addEventListener('DOMContentLoaded', () => {
         renderOrders(filteredOrders);
     }
 
-    // Event listeners for filter changes
+    // Event listeners for filter changes (Orders)
     searchInput.addEventListener('input', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
     agentFilterSelect.addEventListener('change', applyFilters);
+
+
+    // --- Customers Display ---
+    async function fetchAndRenderCustomers() {
+        try {
+            const response = await fetch('/api/customers/');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            allCustomers = await response.json(); // Refresh cached customers
+            applyCustomerFilters(); // Apply current customer filters
+        } catch (error) {
+            console.error('Error fetching customers:', error);
+            customersTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: red;">Failed to load customers.</td></tr>';
+            noCustomersMessage.style.display = 'none';
+        }
+    }
+
+    function renderCustomers(customersToRender) {
+        customersTableBody.innerHTML = '';
+        if (customersToRender.length === 0) {
+            noCustomersMessage.style.display = 'block';
+            customersTableBody.style.display = 'none';
+            return;
+        } else {
+            noCustomersMessage.style.display = 'none';
+            customersTableBody.style.display = 'table-row-group';
+        }
+
+        customersToRender.forEach(customer => {
+            const row = customersTableBody.insertRow();
+            row.innerHTML = `
+                <td>${customer.id.substring(0, 8)}...</td>
+                <td>${customer.name}</td>
+                <td>${customer.whatsapp_number}</td>
+                <td>${customer.delivery_address}</td>
+                <td>${customer.email || 'N/A'}</td>
+                <td>${customer.total_orders_count || 0}</td>
+                <td>${customer.last_order_date || 'N/A'}</td>
+                <td>
+                    <button class="btn primary small-btn view-customer-details-btn" data-customer-id="${customer.id}">View Details</button>
+                    <button class="btn btn-danger small-btn delete-customer-btn" data-customer-id="${customer.id}">Delete</button>
+                </td>
+            `;
+        });
+        document.querySelectorAll('.view-customer-details-btn').forEach(button => {
+            button.removeEventListener('click', openCustomerDetailsModal);
+            button.addEventListener('click', openCustomerDetailsModal);
+        });
+        // Attach event listeners for delete if implemented later
+        // document.querySelectorAll('.delete-customer-btn').forEach(button => {
+        //     button.addEventListener('click', handleDeleteCustomer);
+        // });
+    }
+
+    // Filtering logic for Customers
+    function applyCustomerFilters() {
+        let filteredCustomers = allCustomers;
+        const searchTerm = customerSearchInput.value.toLowerCase();
+        if (searchTerm) {
+            filteredCustomers = filteredCustomers.filter(customer =>
+                customer.name.toLowerCase().includes(searchTerm) ||
+                customer.whatsapp_number.toLowerCase().includes(searchTerm)
+            );
+        }
+        renderCustomers(filteredCustomers);
+    }
+
+    customerSearchInput.addEventListener('input', applyCustomerFilters);
+
+
+    // --- Customer Details Modal Logic ---
+    async function openCustomerDetailsModal(event) {
+        currentModalCustomerId = event.target.dataset.customerId;
+        if (!currentModalCustomerId) return;
+
+        try {
+            const customerResponse = await fetch(`/api/customers/${currentModalCustomerId}`);
+            if (!customerResponse.ok) throw new Error('Customer not found');
+            const customer = await customerResponse.json();
+
+            const ordersResponse = await fetch(`/api/customers/${currentModalCustomerId}/orders`);
+            if (!ordersResponse.ok) throw new Error('Customer orders not found');
+            const customerOrders = await ordersResponse.json();
+
+            populateCustomerDetailsModal(customer, customerOrders);
+            customerDetailsModal.classList.remove('hidden'); // Show the modal
+        } catch (error) {
+            console.error('Error opening customer details:', error);
+            showMessage(`Failed to load customer details: ${error.message}`, 'error');
+        }
+    }
+
+    function closeCustomerDetailsModal() {
+        customerDetailsModal.classList.add('hidden'); // Hide the modal
+        currentModalCustomerId = null; // Clear the current customer ID
+    }
+
+    function populateCustomerDetailsModal(customer, orders) {
+        modalCustomerName.textContent = customer.name;
+        modalCustomerWhatsapp.textContent = customer.whatsapp_number;
+        modalCustomerAddress.textContent = customer.delivery_address;
+        modalCustomerEmail.textContent = customer.email || 'N/A';
+        modalCustomerTotalOrders.textContent = customer.total_orders_count || 0;
+        modalCustomerLastOrder.textContent = customer.last_order_date || 'N/A';
+
+        modalCustomerDiscounts.value = customer.discounts || '';
+        modalCustomerSpecialMessage.value = customer.special_message || '';
+
+        renderCustomerOrdersHistory(orders);
+    }
+
+    function renderCustomerOrdersHistory(orders) {
+        modalCustomerOrdersTableBody.innerHTML = '';
+        if (orders.length === 0) {
+            noCustomerOrdersMessage.style.display = 'block';
+            modalCustomerOrdersTableBody.style.display = 'none';
+            return;
+        } else {
+            noCustomerOrdersMessage.style.display = 'none';
+            modalCustomerOrdersTableBody.style.display = 'table-row-group';
+        }
+
+        orders.forEach(order => {
+            const row = modalCustomerOrdersTableBody.insertRow();
+            const orderTime = order.order_received_timestamp ? new Date(order.order_received_timestamp).toLocaleString() : 'N/A';
+            const addOnsDisplay = order.add_ons_names.length > 0 ? order.add_ons_names.join(', ') : 'None';
+
+            row.innerHTML = `
+                <td>${order.id.substring(0, 8)}...</td>
+                <td>${orderTime}</td>
+                <td>${order.bundle_name}</td>
+                <td>${addOnsDisplay}</td>
+                <td>Le ${parseFloat(order.total_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td><span class="status-badge status-${order.order_status.replace(/\s/g, '_')}">${order.order_status}</span></td>
+            `;
+        });
+    }
+
+    async function saveCustomerDetails() {
+        if (!currentModalCustomerId) return;
+
+        const updatedData = {
+            discounts: modalCustomerDiscounts.value.trim(),
+            special_message: modalCustomerSpecialMessage.value.trim()
+        };
+
+        try {
+            const response = await fetch(`/api/customers/${currentModalCustomerId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+
+            showMessage('Customer details updated successfully!', 'success');
+            // Re-fetch customers to update the main list if total orders count or last order date change (though not via this modal yet)
+            fetchAndRenderCustomers(); 
+            // Close modal after saving
+            closeCustomerDetailsModal();
+        } catch (error) {
+            console.error('Error saving customer details:', error);
+            showMessage(`Failed to save customer details: ${error.message}`, 'error');
+        }
+    }
+
+    // Attach modal event listeners
+    modalCloseButton.addEventListener('click', closeCustomerDetailsModal);
+    window.addEventListener('click', (event) => {
+        if (event.target === customerDetailsModal) {
+            closeCustomerDetailsModal();
+        }
+    });
+    saveCustomerDetailsBtn.addEventListener('click', saveCustomerDetails);
+
 
     // --- Inventory Display ---
     async function fetchAndRenderIngredients() {
@@ -434,7 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            allIngredients = await response.json(); // Cache ingredients
+            allIngredients = await response.json();
             renderIngredients(allIngredients);
         } catch (error) {
             console.error('Error fetching ingredients:', error);
@@ -475,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const reportData = await response.json();
             outputElement.innerHTML = formatReportOutput(reportData, endpoint);
-            outputElement.style.display = 'block'; // Ensure it's visible
+            outputElement.style.display = 'block';
         } catch (error) {
             console.error(`Error generating ${endpoint} report:`, error);
             outputElement.innerHTML = `<p style="color: red;">Failed to generate report: ${error.message}</p>`;
@@ -521,28 +778,55 @@ document.addEventListener('DOMContentLoaded', () => {
     generateAgentPerformanceBtn.addEventListener('click', () => generateReport('agent-performance', 'agentPerformanceOutput'));
 
 
+    // --- Dashboard Metrics ---
+    async function fetchAndRenderDashboardMetrics() {
+        try {
+            const response = await fetch('/api/reports/grand-total-sales');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            grandTotalSalesElement.textContent = `Le ${data.grand_total_sales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            totalOrdersAllTimeElement.textContent = data.total_orders_all_time.toLocaleString();
+            totalCustomersElement.textContent = data.total_customers_registered.toLocaleString();
+        } catch (error) {
+            console.error('Error fetching dashboard metrics:', error);
+            grandTotalSalesElement.textContent = 'Error';
+            totalOrdersAllTimeElement.textContent = 'Error';
+            totalCustomersElement.textContent = 'Error';
+            showMessage('Failed to load dashboard metrics.', 'error');
+        }
+    }
+
+
     // --- Navigation Logic ---
     navLinks.forEach(link => {
         link.addEventListener('click', (event) => {
-            // Remove 'active' class from all links and 'hidden' from all sections
             navLinks.forEach(l => l.classList.remove('active'));
             contentSections.forEach(section => section.classList.add('hidden'));
 
-            // Add 'active' class to the clicked link
             event.target.classList.add('active');
 
-            // Show the target section
             const targetId = event.target.dataset.target;
             document.getElementById(targetId).classList.remove('hidden');
 
-            // Optionally, trigger data refresh for the active tab if needed
             if (targetId === 'orders-list-section') {
                 fetchAndRenderOrders();
+            } else if (targetId === 'customers-list-section') {
+                fetchAndRenderCustomers();
             } else if (targetId === 'inventory-section') {
                 fetchAndRenderIngredients();
+            } else if (targetId === 'add-order-section') {
+                populateFormDropdowns();
+                calculateTotalPrice();
+                newCustomerFields.style.display = 'none';
+                newCustomerNameInput.required = false;
+                newWhatsappNumberInput.required = false;
+                newDeliveryAddressInput.required = false;
+                customerIdSelect.required = true;
+            } else if (targetId === 'dashboard-section') {
+                fetchAndRenderDashboardMetrics();
             }
-            // Reports typically generate on demand, so no immediate refresh here
-            // Add Order form dropdowns are populated on initial load
         });
     });
 
@@ -550,14 +834,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function switchTab(targetId) {
         navLinks.forEach(link => {
             if (link.dataset.target === targetId) {
-                link.click(); // Simulate a click on the desired tab
+                link.click();
             }
         });
     }
 
-
     // --- Initial Load ---
-    populateFormDropdowns();
-    fetchAndRenderOrders(); // Initial load for default tab
-    // Other sections will be loaded when their tabs are clicked
+    document.querySelector('.nav-link[data-target="dashboard-section"]').click();
 });
