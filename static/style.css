@@ -563,6 +563,11 @@ td select {
     /* Padding around the content */
 }
 
+.modal.hidden {
+    /* IMPORTANT: Ensure this overrides display: flex; */
+    display: none !important;
+}
+
 .modal-content {
     background-color: #fefefe;
     margin: auto;

@@ -291,11 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const createdCustomer = await response.json();
             showMessage(`New customer "${createdCustomer.name}" saved!`, 'success');
             
-            await populateFormDropdowns();
-            customerIdSelect.value = createdCustomer.id;
+            await populateFormDropdowns(); // Re-populate to include new customer in dropdown
+            customerIdSelect.value = createdCustomer.id; // Auto-select new customer
             
-            newCustomerFields.style.display = 'none';
-            newCustomerNameInput.value = '';
+            newCustomerFields.style.display = 'none'; // Hide new customer fields after saving
+            newCustomerNameInput.value = ''; // Clear fields
             newWhatsappNumberInput.value = '';
             newDeliveryAddressInput.value = '';
             newCustomerNameInput.required = false;
@@ -303,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
             newDeliveryAddressInput.required = false;
             customerIdSelect.required = true;
 
+            fetchAndRenderCustomers(); // Refresh the main customer list
         } catch (error) {
             console.error('Error saving new customer:', error);
             showMessage(`Failed to save new customer: ${error.message}`, 'error');
@@ -362,6 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage('Order added successfully!', 'success');
             fetchAndRenderOrders();
             switchTab('orders-list-section');
+            fetchAndRenderDashboardMetrics();
         } catch (error) {
             console.error('Error adding order:', error);
             showMessage(`Failed to add order: ${error.message}`, 'error');
@@ -411,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showMessage(`Order ${orderId.substring(0, 8)}... status updated to "${newStatus}"!`, 'success');
             fetchAndRenderOrders();
+            fetchAndRenderDashboardMetrics();
         } catch (error) {
             console.error('Error updating order status:', error);
             showMessage(`Failed to update order status: ${error.message}`, 'error');
@@ -463,6 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showMessage(`Order ${orderId.substring(0, 8)}... deleted successfully!`, 'success');
             fetchAndRenderOrders();
+            fetchAndRenderDashboardMetrics();
         } catch (error) {
             console.error('Error deleting order:', error);
             showMessage(`Failed to delete order: ${error.message}`, 'error');
@@ -513,8 +517,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            allCustomers = await response.json(); // Refresh cached customers
-            applyCustomerFilters(); // Apply current customer filters
+            allCustomers = await response.json();
+            applyCustomerFilters();
         } catch (error) {
             console.error('Error fetching customers:', error);
             customersTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: red;">Failed to load customers.</td></tr>';
@@ -553,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.removeEventListener('click', openCustomerDetailsModal);
             button.addEventListener('click', openCustomerDetailsModal);
         });
-        // Attach event listeners for delete if implemented later
+        // You might add delete functionality for customers later
         // document.querySelectorAll('.delete-customer-btn').forEach(button => {
         //     button.addEventListener('click', handleDeleteCustomer);
         // });
@@ -610,6 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalCustomerTotalOrders.textContent = customer.total_orders_count || 0;
         modalCustomerLastOrder.textContent = customer.last_order_date || 'N/A';
 
+        // Set values for editable fields
         modalCustomerDiscounts.value = customer.discounts || '';
         modalCustomerSpecialMessage.value = customer.special_message || '';
 
@@ -664,9 +669,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showMessage('Customer details updated successfully!', 'success');
-            // Re-fetch customers to update the main list if total orders count or last order date change (though not via this modal yet)
+            // Re-fetch customers to update the main list (if any changes were visible there)
             fetchAndRenderCustomers(); 
-            // Close modal after saving
             closeCustomerDetailsModal();
         } catch (error) {
             console.error('Error saving customer details:', error);
@@ -676,6 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Attach modal event listeners
     modalCloseButton.addEventListener('click', closeCustomerDetailsModal);
+    // This listener makes the modal close when clicking outside of it
     window.addEventListener('click', (event) => {
         if (event.target === customerDetailsModal) {
             closeCustomerDetailsModal();
