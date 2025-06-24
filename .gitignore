@@ -1,0 +1,22 @@
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+.mypy_cache/
+.tox/
+
+# IDE specific (e.g., VS Code)
+.vscode/
+
+# Application specific
+data.json # IMPORTANT: You might want to version control this if it's sample data,
+          # but for live, fluctuating data, you typically don't.
+          # For a small app like this, it's fine to keep it untracked so it's not
+          # accidentally overwritten if you pull from a remote.

@@ -1,0 +1,120 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>House of David - Order Management</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>House of David 👑</h1>
+        <p>Your Gateway to the Good Life - Order Management System</p>
+      </header>
+
+      <section class="add-order">
+        <h2>Add New Order</h2>
+        <form id="orderForm">
+          <div class="form-group">
+            <label for="customerName">Customer Name:</label>
+            <input type="text" id="customerName" required />
+          </div>
+          <div class="form-group">
+            <label for="whatsappNumber">WhatsApp Number:</label>
+            <input
+              type="tel"
+              id="whatsappNumber"
+              placeholder="+232 7X XXX XXX"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="deliveryAddress">Delivery Address:</label>
+            <textarea id="deliveryAddress" rows="2" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="bundleType">Bundle Type:</label>
+            <input
+              type="text"
+              id="bundleType"
+              placeholder="e.g., Gravy Bundle"
+            />
+          </div>
+          <div class="form-group">
+            <label for="addOns">Add-ons (Optional):</label>
+            <input type="text" id="addOns" placeholder="e.g., Chicken, Crab" />
+          </div>
+          <div class="form-group">
+            <label for="totalPrice">Total Price (Le):</label>
+            <input type="number" id="totalPrice" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label for="paymentStatus">Payment Status:</label>
+            <select id="paymentStatus">
+              <option value="Pending">Pending</option>
+              <option value="Paid">Paid</option>
+            </select>
+          </div>
+          <button type="submit" class="btn primary">Add Order</button>
+        </form>
+      </section>
+
+      <section class="order-list">
+        <h2>All Orders</h2>
+        <div class="filter-controls">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by name, number, or address..."
+          />
+          <select id="statusFilter">
+            <option value="All">All Statuses</option>
+            <option value="New">New</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Preparing">Preparing</option>
+            <option value="Packed">Packed</option>
+            <option value="Out for Delivery">Out for Delivery</option>
+            <option value="Delivered">Delivered</option>
+          </select>
+          <input
+            type="text"
+            id="agentFilter"
+            placeholder="Filter by agent ID..."
+          />
+        </div>
+        <div class="table-container">
+          <table id="ordersTable">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer Name</th>
+                <th>WhatsApp Number</th>
+                <th>Address</th>
+                <th>Bundle</th>
+                <th>Add-ons</th>
+                <th>Price (Le)</th>
+                <th>Payment Status</th>
+                <th>Order Status</th>
+                <th>Agent ID</th>
+                <th>Order Time</th>
+                <th>Delivery Time</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Order rows will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </div>
+        <p id="noOrdersMessage" style="display: none">
+          No orders found matching your criteria.
+        </p>
+      </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
