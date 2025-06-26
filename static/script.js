@@ -515,10 +515,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const searchTerm = searchInput.value.toLowerCase();
         if (searchTerm) {
+            // Updated to use the enriched customer data directly from the order object
             filteredOrders = filteredOrders.filter(order =>
-                order.customer_name.toLowerCase().includes(searchTerm) ||
-                order.whatsapp_number.toLowerCase().includes(searchTerm) ||
-                order.delivery_address.toLowerCase().includes(searchTerm)
+                (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm)) ||
+                (order.whatsapp_number && order.whatsapp_number.toLowerCase().includes(searchTerm)) ||
+                (order.delivery_address && order.delivery_address.toLowerCase().includes(searchTerm))
             );
         }
 
@@ -1092,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (targetId === 'customers-list-section') {
                 fetchAndRenderCustomers();
             } else if (targetId === 'inventory-section') {
-                fetchAndRenderInventory(); // Call new general inventory fetch
+                fetchAndRenderInventory();
             } else if (targetId === 'add-order-section') {
                 populateFormDropdowns();
                 calculateTotalPrice();
