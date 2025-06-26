@@ -104,6 +104,48 @@ def update_ingredient(ingredient_id):
             return jsonify(ingredient)
     return jsonify({'error': 'Ingredient not found'}), 404
 
+@inventory_bp.route('/ingredients/<string:ingredient_id>/stock', methods=['PUT'])
+def update_ingredient_stock(ingredient_id):
+    """
+    Updates the stock level of a specific ingredient.
+    Can increase (restock) or decrease (consumption).
+    Expected Request Body:
+    {
+        "quantity_change": 10,  // Positive for restock, negative for consumption
+        "unit_cost": 250        // Optional, only for restock to update last_cost_per_unit
+    }
+    """
+    data = request.json
+    quantity_change = data.get('quantity_change')
+    unit_cost = data.get('unit_cost') # For restock only
+
+    if quantity_change is None or not isinstance(quantity_change, (int, float)):
+        return jsonify({'error': 'Missing or invalid quantity_change'}), 400
+
+    ingredients = _get_all_ingredients()
+    
+    for i, ingredient in enumerate(ingredients):
+        if ingredient['id'] == ingredient_id:
+            # Ensure current_stock is float for calculations
+            current_stock = float(ingredient.get('current_stock', 0))
+            
+            new_stock = current_stock + quantity_change
+            
+            if new_stock < 0:
+                return jsonify({'error': 'Cannot decrease stock below zero'}), 400
+            
+            ingredient['current_stock'] = new_stock
+            
+            # Update last_cost_per_unit if it's a restock (positive quantity_change) and unit_cost is provided
+            if quantity_change > 0 and unit_cost is not None and isinstance(unit_cost, (int, float)):
+                ingredient['last_cost_per_unit'] = float(unit_cost)
+
+            ingredients[i] = ingredient
+            _save_all_ingredients(ingredients)
+            return jsonify(ingredient)
+    return jsonify({'error': 'Ingredient not found'}), 404
+
+
 @inventory_bp.route('/ingredients/low-stock', methods=['GET'])
 def get_low_stock_ingredients():
     """
@@ -258,8 +300,11 @@ def add_add_on():
     {
         "name": "Extra Gravy",
         "price": 50.00,
-        "unit": "cup", // e.g., "piece", "cup", "portion"
-        "is_active": true
+        "unit": "cup",
+        "is_active": true,
+        "current_stock": 100,  # NEW
+        "unit_cost": 25.0,     # NEW
+        "reorder_point": 20    # NEW
     }
     """
     new_add_on_data = request.json
@@ -275,6 +320,9 @@ def add_add_on():
 
     new_add_on_data['id'] = str(uuid.uuid4())
     new_add_on_data['is_active'] = new_add_on_data.get('is_active', True) # Default to active
+    new_add_on_data['current_stock'] = new_add_on_data.get('current_stock', 0) # Default to 0
+    new_add_on_data['unit_cost'] = new_add_on_data.get('unit_cost', 0.0) # Default to 0.0
+    new_add_on_data['reorder_point'] = new_add_on_data.get('reorder_point', 0) # Default to 0
 
     add_ons.append(new_add_on_data)
     _save_all_add_ons(add_ons)
@@ -288,7 +336,10 @@ def update_add_on(add_on_id):
     Expected Request Body:
     {
         "price": 60.00,
-        "is_active": false
+        "is_active": false,
+        "current_stock": 90, # Can be updated here too
+        "unit_cost": 27.5,
+        "reorder_point": 15
     }
     """
     updated_data = request.json
@@ -302,6 +353,48 @@ def update_add_on(add_on_id):
             _save_all_add_ons(add_ons)
             return jsonify(add_on)
     return jsonify({'error': 'Add-on not found'}), 404
+
+@inventory_bp.route('/add-ons/<string:add_on_id>/stock', methods=['PUT'])
+def update_add_on_stock(add_on_id):
+    """
+    Updates the stock level of a specific add-on.
+    Can increase (restock) or decrease (consumption).
+    Expected Request Body:
+    {
+        "quantity_change": 50,  // Positive for restock, negative for consumption
+        "unit_cost": 28.5       // Optional, only for restock to update unit_cost
+    }
+    """
+    data = request.json
+    quantity_change = data.get('quantity_change')
+    unit_cost = data.get('unit_cost') # For restock only
+
+    if quantity_change is None or not isinstance(quantity_change, (int, float)):
+        return jsonify({'error': 'Missing or invalid quantity_change'}), 400
+
+    add_ons = _get_all_add_ons()
+    
+    for i, add_on in enumerate(add_ons):
+        if add_on['id'] == add_on_id:
+            # Ensure current_stock is float for calculations
+            current_stock = float(add_on.get('current_stock', 0))
+            
+            new_stock = current_stock + quantity_change
+            
+            if new_stock < 0:
+                return jsonify({'error': 'Cannot decrease stock below zero'}), 400
+            
+            add_on['current_stock'] = new_stock
+            
+            # Update unit_cost if it's a restock (positive quantity_change) and unit_cost is provided
+            if quantity_change > 0 and unit_cost is not None and isinstance(unit_cost, (int, float)):
+                add_on['unit_cost'] = float(unit_cost)
+
+            add_ons[i] = add_on
+            _save_all_add_ons(add_ons)
+            return jsonify(add_on)
+    return jsonify({'error': 'Add-on not found'}), 404
+
 
 @inventory_bp.route('/add-ons/<string:add_on_id>/orders', methods=['GET'])
 def get_addon_orders(add_on_id):

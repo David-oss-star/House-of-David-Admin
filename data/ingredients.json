@@ -3,9 +3,9 @@
         "id": "ing1a2b3c4d5-e6f7-8901-2345-67890abcde",
         "name": "Onions",
         "unit": "kg",
-        "current_stock": 25.0,
+        "current_stock": 20.0,
         "reorder_point": 5.0,
-        "last_cost_per_unit": 200.0,
+        "last_cost_per_unit": 5.0,
         "supplier": "Central Market"
     },
     {
@@ -70,5 +70,14 @@
         "reorder_point": 2.0,
         "last_cost_per_unit": 180.0,
         "supplier": "Fish Market"
+    },
+    {
+        "name": "Oil",
+        "unit": "kg",
+        "current_stock": 20,
+        "reorder_point": 5,
+        "last_cost_per_unit": 0,
+        "supplier": "xyz coperation",
+        "id": "fc2ae03a-895e-465c-adc3-4a5541f1c092"
     }
 ]

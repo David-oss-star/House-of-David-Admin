@@ -24,8 +24,23 @@
         "payment_status": "Pending",
         "id": "24fffc29-47ce-4ca2-a3ee-0cdbaff92070",
         "order_received_timestamp": "2025-06-24T07:58:39.278836",
-        "order_status": "Cancelled",
+        "order_status": "Delivered",
         "delivery_agent_id": "agent123-abc-456-def-7890ghij",
         "delivery_timestamp": "2025-06-24T07:59:31.976687"
+    },
+    {
+        "customer_id": "cfc3c167-0df8-4dea-9c50-4e7c306dbe12",
+        "bundle_id": "fdcf4bd1-0ad7-4566-a536-b6dfc73af3fa",
+        "add_ons": [
+            "ao1a2b3c-4d5e-6f70-8192-3a4b5c6d7e8f",
+            "ao9f0e1d-2c3b-4a59-6b7c-8d9e0f1a2b3c"
+        ],
+        "total_price": 275,
+        "payment_status": "Paid",
+        "id": "7a505850-c3b1-4943-81ee-ad2c7958b2c0",
+        "order_received_timestamp": "2025-06-26T01:45:14.988865",
+        "order_status": "New",
+        "delivery_agent_id": null,
+        "delivery_timestamp": null
     }
 ]

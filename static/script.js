@@ -22,12 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const customerSearchInput = document.getElementById('customerSearchInput');
     const noCustomersMessage = document.getElementById('noCustomersMessage');
 
-    // New inventory tables
+    // Inventory tables
     const ingredientsTableBody = document.querySelector('#ingredientsTable tbody');
     const bundlesTableBody = document.querySelector('#bundlesTable tbody');
     const addOnsTableBody = document.querySelector('#addOnsTable tbody');
 
-    // New inventory add elements
+    // Inventory add elements
     const toggleAddInventoryFormBtn = document.getElementById('toggleAddInventoryFormBtn');
     const addInventoryFormContainer = document.getElementById('addInventoryFormContainer');
     const inventoryItemTypeSelect = document.getElementById('inventoryItemType');
@@ -56,14 +56,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const newAddOnNameInput = document.getElementById('newAddOnName');
     const newAddOnPriceInput = document.getElementById('newAddOnPrice');
     const newAddOnUnitInput = document.getElementById('newAddOnUnit');
+    const newAddOnCurrentStockInput = document.getElementById('newAddOnCurrentStock');
+    const newAddOnUnitCostInput = document.getElementById('newAddOnUnitCost');
+    const newAddOnReorderPointInput = document.getElementById('newAddOnReorderPoint');
     const newAddOnIsActiveCheckbox = document.getElementById('newAddOnIsActive');
 
 
-    const generateDailySummaryBtn = document.getElementById('generateDailySummary');
+    // Reports elements
+    const reportToggleButtons = document.querySelectorAll('.report-toggle-btn');
     const dailySummaryOutput = document.getElementById('dailySummaryOutput');
-    const generateSalesByBundleBtn = document.getElementById('generateSalesByBundle');
     const salesByBundleOutput = document.getElementById('salesByBundleOutput');
-    const generateAgentPerformanceBtn = document.getElementById('generateAgentPerformance');
     const agentPerformanceOutput = document.getElementById('agentPerformanceOutput');
 
     const grandTotalSalesElement = document.getElementById('grandTotalSales');
@@ -91,14 +93,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const productModalTitle = document.getElementById('productModalTitle');
     const modalProductName = document.getElementById('modalProductName');
     const modalProductId = document.getElementById('modalProductId');
-    const productBasePriceP = document.getElementById('productBasePriceP'); // For bundles
+    const productBasePriceP = document.getElementById('productBasePriceP');
     const modalProductBasePrice = document.getElementById('modalProductBasePrice');
-    const productPriceP = document.getElementById('productPriceP'); // For add-ons
+    const productPriceP = document.getElementById('productPriceP');
     const modalProductPrice = document.getElementById('modalProductPrice');
-    const productUnitP = document.getElementById('productUnitP'); // For add-ons
+    const productUnitP = document.getElementById('productUnitP');
     const modalProductUnit = document.getElementById('modalProductUnit');
-    const productDescriptionP = document.getElementById('productDescriptionP'); // For bundles
+    const productDescriptionP = document.getElementById('productDescriptionP');
     const modalProductDescription = document.getElementById('modalProductDescription');
+    const modalProductCurrentStockP = document.getElementById('modalProductCurrentStock');
+    const modalProductUnitCostP = document.getElementById('modalProductUnitCost');
+    const modalProductTotalValueP = document.getElementById('modalProductTotalValue');
+    const modalProductReorderPointP = document.getElementById('modalProductReorderPoint');
     const modalProductActive = document.getElementById('modalProductActive');
 
     const modalEditProductName = document.getElementById('modalEditProductName');
@@ -110,6 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalEditProductUnit = document.getElementById('modalEditProductUnit');
     const editProductDescriptionGroup = document.getElementById('editProductDescriptionGroup');
     const modalEditProductDescription = document.getElementById('modalEditProductDescription');
+    const editProductCurrentStockGroup = document.getElementById('editProductCurrentStockGroup');
+    const modalEditProductCurrentStock = document.getElementById('modalEditProductCurrentStock');
+    const editProductUnitCostGroup = document.getElementById('editProductUnitCostGroup');
+    const modalEditProductUnitCost = document.getElementById('modalEditProductUnitCost');
+    const editProductReorderPointGroup = document.getElementById('editProductReorderPointGroup');
+    const modalEditProductReorderPoint = document.getElementById('modalEditProductReorderPoint');
     const modalEditProductActive = document.getElementById('modalEditProductActive');
     const saveProductDetailsBtn = document.getElementById('saveProductDetailsBtn');
     const modalProductOrdersTableBody = document.querySelector('#modalProductOrdersTable tbody');
@@ -117,9 +129,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const bundleRecipeTitle = document.getElementById('bundleRecipeTitle');
     const modalProductRecipe = document.getElementById('modalProductRecipe');
 
+    // Stock Update Modal elements
+    const stockUpdateModal = document.getElementById('stockUpdateModal');
+    const stockModalCloseButton = document.getElementById('stockModalCloseButton');
+    const stockModalTitle = document.getElementById('stockModalTitle');
+    const stockModalItemName = document.getElementById('stockModalItemName');
+    const stockModalCurrentStock = document.getElementById('stockModalCurrentStock');
+    const stockModalUnit = document.getElementById('stockModalUnit');
+    const stockModalUnitCostP = document.getElementById('stockModalUnitCostP');
+    const stockModalUnitCost = document.getElementById('stockModalUnitCost');
+    const stockModalTotalValueP = document.getElementById('stockModalTotalValueP');
+    const stockModalTotalValue = document.getElementById('stockModalTotalValue');
+    const stockAdjustmentTypeSelect = document.getElementById('stockAdjustmentType');
+    const stockQuantityChangeInput = document.getElementById('stockQuantityChange');
+    const newUnitCostGroup = document.getElementById('newUnitCostGroup');
+    const newUnitCostInput = document.getElementById('newUnitCost');
+    const estimatedRestockValueNote = document.getElementById('estimatedRestockValueNote');
+    const estimatedRestockValue = document.getElementById('estimatedRestockValue');
+    const saveStockUpdateBtn = document.getElementById('saveStockUpdateBtn');
+
     let currentModalCustomerId = null;
     let currentModalProductId = null;
-    let currentModalProductType = null;
+    let currentModalProductType = null; // 'bundle' or 'addon' for Product Details Modal
+    let currentStockItem = null; // Stores the ingredient/addon object currently open in stock modal
+    let currentStockModalType = null; // Stores 'ingredient' or 'addon' specifically for the Stock Update Modal
 
     // Navigation elements
     const navLinks = document.querySelectorAll('.nav-link');
@@ -138,9 +171,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const msgDiv = document.createElement('div');
         msgDiv.className = `alert ${type}`;
         msgDiv.textContent = message;
+        // Remove existing alerts to prevent clutter
         document.querySelectorAll('.alert').forEach(alert => alert.remove());
         document.body.prepend(msgDiv);
-        setTimeout(() => msgDiv.remove(), 5000);
+        // The CSS animation handles the fade out, so no need for JS timeout for removal
     }
 
     // Function to fetch and populate dropdowns (Customers, Bundles, Add-ons, Agents, Ingredients for recipe)
@@ -313,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td>${orderTime}</td>
                 <td>${deliveryTime}</td>
-                <td>
+                <td class="table-actions">
                     <button class="btn btn-danger delete-btn" data-order-id="${order.id}">Delete</button>
                 </td>
             `;
@@ -626,7 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${customer.email || 'N/A'}</td>
                 <td>${customer.total_orders_count || 0}</td>
                 <td>${customer.last_order_date || 'N/A'}</td>
-                <td>
+                <td class="table-actions">
                     <button class="btn primary small-btn view-customer-details-btn" data-customer-id="${customer.id}">View Details</button>
                     <button class="btn btn-danger small-btn delete-customer-btn" data-customer-id="${customer.id}">Delete</button>
                 </td>
@@ -636,7 +670,44 @@ document.addEventListener('DOMContentLoaded', () => {
             button.removeEventListener('click', openCustomerDetailsModal);
             button.addEventListener('click', openCustomerDetailsModal);
         });
+        document.querySelectorAll('.delete-customer-btn').forEach(button => {
+            button.removeEventListener('click', handleDeleteCustomer); // Remove any old listeners
+            button.addEventListener('click', handleDeleteCustomer);
+        });
     }
+
+    async function handleDeleteCustomer(event) {
+        const customerId = event.target.dataset.customerId;
+        // Find the customer's name for the confirmation message
+        const customerRow = event.target.closest('tr');
+        const customerName = customerRow ? customerRow.querySelector('td:nth-child(2)').textContent : 'this customer'; // Assuming name is in the second column
+
+        const confirmDelete = confirm(`Are you sure you want to DELETE customer "${customerName}" and ALL their associated orders? This action cannot be undone.`);
+
+        if (!confirmDelete) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/customers/${customerId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+
+            showMessage(`Customer "${customerName}" and all associated orders deleted successfully!`, 'success');
+            fetchAndRenderCustomers(); // Refresh customer list
+            fetchAndRenderOrders(); // Refresh order list as well
+            fetchAndRenderDashboardMetrics(); // Refresh dashboard metrics
+        } catch (error) {
+            console.error('Error deleting customer:', error);
+            showMessage(`Failed to delete customer: ${error.message}`, 'error');
+        }
+    }
+
 
     // Filtering logic for Customers
     function applyCustomerFilters() {
@@ -793,16 +864,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error fetching inventory:', error);
             showMessage(`Failed to load inventory data: ${error.message}`, 'error');
-            ingredientsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load ingredients.</td></tr>';
+            ingredientsTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">Failed to load ingredients.</td></tr>'; // Updated colspan
             bundlesTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load bundles.</td></tr>';
-            addOnsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load add-ons.</td></tr>';
+            addOnsTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: red;">Failed to load add-ons.</td></tr>'; // Updated colspan
         }
     }
 
     function renderIngredients(ingredientsToRender) {
         ingredientsTableBody.innerHTML = '';
         if (ingredientsToRender.length === 0) {
-            ingredientsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No ingredients found.</td></tr>';
+            ingredientsTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No ingredients found.</td></tr>'; // Updated colspan
             return;
         }
 
@@ -817,7 +888,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${ing.unit}</td>
                 <td>${ing.reorder_point || 'N/A'}</td>
                 <td class="${statusClass}">${statusText}</td>
+                <td class="table-actions">
+                    <button class="btn secondary small-btn update-stock-btn" data-item-id="${ing.id}" data-item-type="ingredient">Update Stock</button>
+                </td>
             `;
+        });
+        document.querySelectorAll('.update-stock-btn[data-item-type="ingredient"]').forEach(button => {
+            button.removeEventListener('click', openStockUpdateModal);
+            button.addEventListener('click', openStockUpdateModal);
         });
     }
 
@@ -838,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>Le ${parseFloat(bundle.base_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td>${bundle.description || 'N/A'}</td>
                 <td><span class="${activeClass}">${activeStatus}</span></td>
-                <td>
+                <td class="table-actions">
                     <button class="btn primary small-btn view-product-details-btn" data-product-id="${bundle.id}" data-product-type="bundle">View Details</button>
                 </td>
             `;
@@ -852,7 +930,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAddOns(addOnsToRender) {
         addOnsTableBody.innerHTML = '';
         if (addOnsToRender.length === 0) {
-            addOnsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No add-ons found.</td></tr>';
+            addOnsTableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">No add-ons found.</td></tr>'; // Updated colspan
             return;
         }
 
@@ -860,20 +938,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = addOnsTableBody.insertRow();
             const activeStatus = addOn.is_active ? 'Yes' : 'No';
             const activeClass = addOn.is_active ? 'status-sufficient-stock' : 'status-low-stock';
+            const stockStatusClass = (addOn.current_stock !== undefined && addOn.reorder_point !== undefined && addOn.current_stock <= addOn.reorder_point) ? 'status-low-stock' : 'status-sufficient-stock';
+            const stockStatusText = (addOn.current_stock !== undefined && addOn.reorder_point !== undefined && addOn.current_stock <= addOn.reorder_point) ? 'LOW' : 'OK';
+            const totalValue = (addOn.current_stock || 0) * (addOn.unit_cost || 0);
 
             row.innerHTML = `
                 <td>${addOn.name}</td>
                 <td>Le ${parseFloat(addOn.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td>${addOn.unit || 'N/A'}</td>
+                <td>${addOn.current_stock !== undefined ? addOn.current_stock : 'N/A'}</td>
+                <td>Le ${parseFloat(addOn.unit_cost || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td>Le ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td>${addOn.reorder_point !== undefined ? addOn.reorder_point : 'N/A'}</td>
+                <td class="${stockStatusClass}">${stockStatusText}</td>
                 <td><span class="${activeClass}">${activeStatus}</span></td>
-                <td>
+                <td class="table-actions">
                     <button class="btn primary small-btn view-product-details-btn" data-product-id="${addOn.id}" data-product-type="addon">View Details</button>
+                    <button class="btn secondary small-btn update-stock-btn" data-item-id="${addOn.id}" data-item-type="addon">Update Stock</button>
                 </td>
             `;
         });
         document.querySelectorAll('.view-product-details-btn[data-product-type="addon"]').forEach(button => {
             button.removeEventListener('click', openProductDetailsModal);
             button.addEventListener('click', openProductDetailsModal);
+        });
+        document.querySelectorAll('.update-stock-btn[data-item-type="addon"]').forEach(button => {
+            button.removeEventListener('click', openStockUpdateModal);
+            button.addEventListener('click', openStockUpdateModal);
         });
     }
 
@@ -1062,11 +1153,14 @@ document.addEventListener('DOMContentLoaded', () => {
             name: newAddOnNameInput.value.trim(),
             price: parseFloat(newAddOnPriceInput.value),
             unit: newAddOnUnitInput.value.trim(),
-            is_active: newAddOnIsActiveCheckbox.checked
+            is_active: newAddOnIsActiveCheckbox.checked,
+            current_stock: parseFloat(newAddOnCurrentStockInput.value) || 0,
+            unit_cost: parseFloat(newAddOnUnitCostInput.value) || 0,
+            reorder_point: parseFloat(newAddOnReorderPointInput.value) || 0
         };
 
-        if (!newAddOn.name || isNaN(newAddOn.price) || newAddOn.price <= 0 || !newAddOn.unit) {
-            showMessage('Please fill in required add-on fields: Name, Price, Unit.', 'error');
+        if (!newAddOn.name || isNaN(newAddOn.price) || newAddOn.price <= 0 || !newAddOn.unit || isNaN(newAddOn.current_stock)) {
+            showMessage('Please fill in required add-on fields: Name, Price, Unit, Current Stock.', 'error');
             return;
         }
 
@@ -1132,6 +1226,10 @@ document.addEventListener('DOMContentLoaded', () => {
         productPriceP.style.display = 'none';
         productUnitP.style.display = 'none';
         productDescriptionP.style.display = 'none';
+        modalProductCurrentStockP.style.display = 'none';
+        modalProductUnitCostP.style.display = 'none';
+        modalProductTotalValueP.style.display = 'none';
+        modalProductReorderPointP.style.display = 'none';
         bundleRecipeTitle.style.display = 'none';
         modalProductRecipe.style.display = 'none';
 
@@ -1140,6 +1238,9 @@ document.addEventListener('DOMContentLoaded', () => {
         editProductPriceGroup.style.display = 'none';
         editProductUnitGroup.style.display = 'none';
         editProductDescriptionGroup.style.display = 'none';
+        editProductCurrentStockGroup.style.display = 'none';
+        editProductUnitCostGroup.style.display = 'none';
+        editProductReorderPointGroup.style.display = 'none';
 
         modalEditProductName.value = product.name;
         modalEditProductActive.checked = product.is_active || false;
@@ -1172,16 +1273,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalProductRecipe.innerHTML = '<p>No recipe defined.</p>';
             }
 
-        } else if (type === 'addon') {
-            productPriceP.style.display = 'block';
-            modalProductPrice.textContent = `Le ${parseFloat(product.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            productUnitP.style.display = 'block';
-            modalProductUnit.textContent = product.unit || 'N/A';
+        } else if (type === 'addon' || type === 'ingredient') { // Add ingredient to shared logic
+            // Display common stock fields
+            modalProductCurrentStockP.style.display = 'block';
+            modalProductUnitCostP.style.display = 'block';
+            modalProductTotalValueP.style.display = 'block';
+            modalProductReorderPointP.style.display = 'block';
 
-            editProductPriceGroup.style.display = 'block';
-            modalEditProductPrice.value = product.price;
-            editProductUnitGroup.style.display = 'block';
-            modalEditProductUnit.value = product.unit || '';
+            modalProductCurrentStockP.textContent = `Current Stock: ${product.current_stock !== undefined ? product.current_stock : 'N/A'}`;
+            modalProductUnitCostP.textContent = `Unit Cost: Le ${parseFloat(product.unit_cost || product.last_cost_per_unit || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            const totalValue = (product.current_stock || 0) * (product.unit_cost || product.last_cost_per_unit || 0);
+            modalProductTotalValueP.textContent = `Total Value: Le ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            modalProductReorderPointP.textContent = `Reorder Point: ${product.reorder_point !== undefined ? product.reorder_point : 'N/A'}`;
+
+            // Editable fields for common stock fields
+            editProductCurrentStockGroup.style.display = 'block';
+            modalEditProductCurrentStock.value = product.current_stock || 0;
+            editProductUnitCostGroup.style.display = 'block';
+            modalEditProductUnitCost.value = product.unit_cost || product.last_cost_per_unit || 0;
+            editProductReorderPointGroup.style.display = 'block';
+            modalEditProductReorderPoint.value = product.reorder_point || 0;
+
+            if (type === 'addon') {
+                productPriceP.style.display = 'block';
+                modalProductPrice.textContent = `Le ${parseFloat(product.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                productUnitP.style.display = 'block';
+                modalProductUnit.textContent = product.unit || 'N/A';
+
+                editProductPriceGroup.style.display = 'block';
+                modalEditProductPrice.value = product.price;
+                editProductUnitGroup.style.display = 'block';
+                modalEditProductUnit.value = product.unit || '';
+            } else if (type === 'ingredient') {
+                productUnitP.style.display = 'block';
+                modalProductUnit.textContent = product.unit || 'N/A';
+                // Ingredients don't have price/description fields in this modal context
+                editProductUnitGroup.style.display = 'block';
+                modalEditProductUnit.value = product.unit || '';
+            }
         }
 
         renderProductOrdersHistory(orders, type);
@@ -1217,15 +1346,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const updatedData = {
             name: modalEditProductName.value.trim(),
-            is_active: modalEditProductActive.checked
+            // Only include is_active if the product type supports it (bundles, addons)
+            // Ingredients don't have this field
+            ...(currentModalProductType === 'bundle' || currentModalProductType === 'addon' ? { is_active: modalEditProductActive.checked } : {})
         };
 
+        // Common editable fields for products/ingredients
         if (currentModalProductType === 'bundle') {
             updatedData.base_price = parseFloat(modalEditProductBasePrice.value);
             updatedData.description = modalEditProductDescription.value.trim();
         } else if (currentModalProductType === 'addon') {
             updatedData.price = parseFloat(modalEditProductPrice.value);
             updatedData.unit = modalEditProductUnit.value.trim();
+            updatedData.current_stock = parseFloat(modalEditProductCurrentStock.value);
+            updatedData.unit_cost = parseFloat(modalEditProductUnitCost.value);
+            updatedData.reorder_point = parseFloat(modalEditProductReorderPoint.value);
+        } else if (currentModalProductType === 'ingredient') {
+            updatedData.unit = modalEditProductUnit.value.trim();
+            updatedData.current_stock = parseFloat(modalEditProductCurrentStock.value);
+            updatedData.last_cost_per_unit = parseFloat(modalEditProductUnitCost.value); // Use last_cost_per_unit for ingredients
+            updatedData.reorder_point = parseFloat(modalEditProductReorderPoint.value);
         }
 
         const pathSegment = currentModalProductType === 'addon' ? 'add-ons' : currentModalProductType + 's';
@@ -1262,23 +1402,218 @@ document.addEventListener('DOMContentLoaded', () => {
     saveProductDetailsBtn.addEventListener('click', saveProductDetails);
 
 
-    // --- Reporting ---
-    async function generateReport(endpoint, outputElementId) {
-        const outputElement = document.getElementById(outputElementId);
-        outputElement.innerHTML = '<p>Generating report...</p>';
-        try {
-            const response = await fetch(`/api/reports/${endpoint}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const reportData = await response.json();
-            outputElement.innerHTML = formatReportOutput(reportData, endpoint);
-            outputElement.style.display = 'block';
-        } catch (error) {
-            console.error(`Error generating ${endpoint} report:`, error);
-            outputElement.innerHTML = `<p style="color: red;">Failed to generate report: ${error.message}</p>`;
+    // --- Stock Update Modal Logic ---
+    async function openStockUpdateModal(event) {
+        const itemId = event.target.dataset.itemId;
+        const itemType = event.target.dataset.itemType; // 'ingredient' or 'addon'
+        if (!itemId || !itemType) return;
+
+        currentStockItem = null; // Clear previous item
+        currentStockModalType = itemType; // Store the type here
+
+        // Find the item from our global arrays
+        if (itemType === 'ingredient') {
+            currentStockItem = allIngredients.find(ing => ing.id === itemId);
+        } else if (itemType === 'addon') {
+            currentStockItem = allAddOns.find(ao => ao.id === itemId);
+        }
+
+        if (!currentStockItem) {
+            showMessage(`Could not find ${itemType} with ID ${itemId}.`, 'error');
+            return;
+        }
+
+        populateStockUpdateModal(currentStockItem, currentStockModalType); // Use the new global type
+        stockUpdateModal.classList.remove('hidden'); // Show the modal
+    }
+
+    function closeStockUpdateModal() {
+        stockUpdateModal.classList.add('hidden');
+        currentStockItem = null;
+        currentStockModalType = null; // Clear the global type
+        // Reset form fields
+        stockAdjustmentTypeSelect.value = 'restock';
+        stockQuantityChangeInput.value = '0';
+        newUnitCostInput.value = '';
+        newUnitCostGroup.style.display = 'block'; // Ensure it's visible by default for restock
+        estimatedRestockValueNote.style.display = 'none';
+        estimatedRestockValue.textContent = 'Le 0.00';
+    }
+
+    function populateStockUpdateModal(item, type) {
+        stockModalTitle.textContent = `Update ${type.charAt(0).toUpperCase() + type.slice(1)} Stock`;
+        stockModalItemName.textContent = item.name;
+        stockModalCurrentStock.textContent = item.current_stock !== undefined ? item.current_stock : 'N/A';
+        stockModalUnit.textContent = item.unit || '';
+
+        const unitCost = item.unit_cost !== undefined ? item.unit_cost : (item.last_cost_per_unit !== undefined ? item.last_cost_per_unit : 0);
+        stockModalUnitCost.textContent = `Le ${parseFloat(unitCost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        
+        const totalValue = (item.current_stock || 0) * unitCost;
+        stockModalTotalValue.textContent = `Le ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        // Show/hide unit cost and total value based on item type
+        // Both ingredients and add-ons now have unit_cost/last_cost_per_unit
+        stockModalUnitCostP.style.display = 'block';
+        stockModalTotalValueP.style.display = 'block';
+
+        // Reset and set default for adjustment type
+        stockAdjustmentTypeSelect.value = 'restock';
+        stockQuantityChangeInput.value = '0';
+        newUnitCostInput.value = unitCost; // Pre-fill with current unit cost
+        newUnitCostGroup.style.display = 'block'; // Always show for restock by default
+        estimatedRestockValueNote.style.display = 'block'; // Show estimated value by default for restock
+        calculateEstimatedRestockValue(); // Initial calculation
+
+        stockQuantityChangeInput.focus(); // Focus on quantity input for quick entry
+    }
+
+    // Event listener for adjustment type change
+    stockAdjustmentTypeSelect.addEventListener('change', () => {
+        const type = stockAdjustmentTypeSelect.value;
+        if (type === 'restock') {
+            newUnitCostGroup.style.display = 'block';
+            newUnitCostInput.value = currentStockItem.unit_cost || currentStockItem.last_cost_per_unit || 0; // Pre-fill with current cost
+            estimatedRestockValueNote.style.display = 'block';
+            stockQuantityChangeInput.min = "0"; // Only positive quantity for restock
+        } else { // consumption
+            newUnitCostGroup.style.display = 'none';
+            estimatedRestockValueNote.style.display = 'none';
+            stockQuantityChangeInput.min = "0"; // User enters positive number for decrease
+        }
+        stockQuantityChangeInput.value = '0'; // Reset quantity on type change
+        calculateEstimatedRestockValue(); // Recalculate
+    });
+
+    // Event listeners for quantity and unit cost changes to calculate estimated value
+    stockQuantityChangeInput.addEventListener('input', calculateEstimatedRestockValue);
+    newUnitCostInput.addEventListener('input', calculateEstimatedRestockValue);
+
+    function calculateEstimatedRestockValue() {
+        const quantity = parseFloat(stockQuantityChangeInput.value);
+        const unitCost = parseFloat(newUnitCostInput.value);
+        const adjustmentType = stockAdjustmentTypeSelect.value;
+
+        if (adjustmentType === 'restock' && !isNaN(quantity) && quantity > 0 && !isNaN(unitCost) && unitCost >= 0) {
+            const estimatedValue = quantity * unitCost;
+            estimatedRestockValue.textContent = `Le ${estimatedValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            estimatedRestockValueNote.style.display = 'block';
+        } else {
+            estimatedRestockValueNote.style.display = 'none';
+            estimatedRestockValue.textContent = 'Le 0.00';
         }
     }
+
+    // Save Stock Update
+    saveStockUpdateBtn.addEventListener('click', async () => {
+        if (!currentStockItem || !currentStockModalType) {
+            showMessage('No item selected for stock update or item type is missing.', 'error');
+            return;
+        }
+
+        const quantityChange = parseFloat(stockQuantityChangeInput.value);
+        if (isNaN(quantityChange) || quantityChange <= 0) {
+            showMessage('Please enter a valid positive quantity for the stock adjustment.', 'error');
+            return;
+        }
+
+        const adjustmentType = stockAdjustmentTypeSelect.value;
+        let finalQuantityChange = quantityChange;
+        let unitCostToUse = parseFloat(newUnitCostInput.value); 
+        // If unitCostToUse is NaN (e.g., field was empty for restock), default to current or 0
+        if (isNaN(unitCostToUse)) {
+             unitCostToUse = currentStockItem.unit_cost || currentStockItem.last_cost_per_unit || 0;
+        }
+
+
+        if (adjustmentType === 'consumption') {
+            finalQuantityChange = -quantityChange; // Make it negative for consumption
+            // For consumption, we don't update the unit cost, so we don't send it.
+            // Backend will use its existing unit_cost/last_cost_per_unit for internal calculations.
+            unitCostToUse = undefined; // Explicitly set to undefined so it's not sent in payload
+
+            if ((currentStockItem.current_stock || 0) + finalQuantityChange < 0) {
+                showMessage('Cannot decrease stock below zero.', 'error');
+                return;
+            }
+        }
+        
+        // Prepare payload
+        const payload = { quantity_change: finalQuantityChange };
+        if (adjustmentType === 'restock') {
+            payload.unit_cost = unitCostToUse;
+        }
+
+        // Use currentStockModalType for constructing the endpoint path
+        const endpointPath = currentStockModalType === 'ingredient' ? 
+            `/api/inventory/ingredients/${currentStockItem.id}/stock` : 
+            `/api/inventory/add-ons/${currentStockItem.id}/stock`;
+
+        try {
+            const response = await fetch(endpointPath, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+
+            const updatedItem = await response.json();
+            showMessage(`${currentStockItem.name} stock updated successfully! New stock: ${updatedItem.current_stock}`, 'success');
+            fetchAndRenderInventory(); // Refresh relevant tables
+            closeStockUpdateModal();
+        } catch (error) {
+            console.error('Error updating stock:', error);
+            showMessage(`Failed to update stock: ${error.message}`, 'error');
+        }
+    });
+
+    // Attach stock modal event listeners
+    stockModalCloseButton.addEventListener('click', closeStockUpdateModal);
+    window.addEventListener('click', (event) => {
+        if (event.target === stockUpdateModal) {
+            closeStockUpdateModal();
+        }
+    });
+
+
+    // --- Reporting ---
+    // NEW: Generic function to toggle report visibility and fetch/render if hidden
+    async function toggleReportDisplay(event) {
+        const button = event.target;
+        const targetReportId = button.dataset.targetReport;
+        const outputElement = document.getElementById(targetReportId);
+
+        if (outputElement.classList.contains('hidden')) {
+            // Report is hidden, so show it and fetch data
+            outputElement.innerHTML = '<p>Generating report...</p>'; // Show loading message
+            try {
+                // Corrected: Remove 'generate' prefix, then convert camelCase to kebab-case, then lowercase
+                let baseEndpoint = button.id.replace('generate', ''); // e.g., "DailySummary"
+                const apiEndpoint = baseEndpoint.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+                
+                const response = await fetch(`/api/reports/${apiEndpoint}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const reportData = await response.json();
+                outputElement.innerHTML = formatReportOutput(reportData, apiEndpoint);
+                outputElement.classList.remove('hidden'); // Show the content
+            } catch (error) {
+                console.error(`Error generating report:`, error);
+                outputElement.innerHTML = `<p style="color: red;">Failed to generate report: ${error.message}</p>`;
+                outputElement.classList.remove('hidden'); // Still show error to user
+            }
+        } else {
+            // Report is visible, so hide it
+            outputElement.classList.add('hidden');
+            outputElement.innerHTML = ''; // Clear content when hidden
+        }
+    }
+
 
     function formatReportOutput(data, endpoint) {
         let html = '<div class="report-data">';
@@ -1314,9 +1649,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
-    generateDailySummaryBtn.addEventListener('click', () => generateReport('daily-summary', 'dailySummaryOutput'));
-    generateSalesByBundleBtn.addEventListener('click', () => generateReport('sales-by-bundle', 'salesByBundleOutput'));
-    generateAgentPerformanceBtn.addEventListener('click', () => generateReport('agent-performance', 'agentPerformanceOutput'));
+    // Attach event listener to all report toggle buttons
+    reportToggleButtons.forEach(button => {
+        button.removeEventListener('click', toggleReportDisplay); // Ensure no duplicate listeners
+        button.addEventListener('click', toggleReportDisplay);
+    });
 
 
     // --- Dashboard Metrics ---
@@ -1343,23 +1680,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Navigation Logic ---
     navLinks.forEach(link => {
         link.addEventListener('click', (event) => {
-            navLinks.forEach(l => l.classList.remove('active'));
+            // First, hide ALL content sections
             contentSections.forEach(section => section.classList.add('hidden'));
 
+            // Remove active class from all nav links
+            navLinks.forEach(l => l.classList.remove('active'));
+
+            // Add active class to the clicked nav link
             event.target.classList.add('active');
 
             const targetId = event.target.dataset.target;
             document.getElementById(targetId).classList.remove('hidden');
 
+            // Specific data fetching/rendering based on tab
             if (targetId === 'orders-list-section') {
                 fetchAndRenderOrders();
             } else if (targetId === 'customers-list-section') {
                 fetchAndRenderCustomers();
             } else if (targetId === 'inventory-section') {
-                fetchAndRenderInventory(); // Call new general inventory fetch
+                fetchAndRenderInventory();
             } else if (targetId === 'add-order-section') {
                 populateFormDropdowns();
                 calculateTotalPrice();
+                // Ensure new customer fields are hidden and required attributes reset on tab switch
                 newCustomerFields.style.display = 'none';
                 newCustomerNameInput.required = false;
                 newWhatsappNumberInput.required = false;
@@ -1368,6 +1711,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (targetId === 'dashboard-section') {
                 fetchAndRenderDashboardMetrics();
             }
+            // For reports, we don't fetch on tab switch, but rely on button click
+            // to allow reports to be collapsed by default.
         });
     });
 

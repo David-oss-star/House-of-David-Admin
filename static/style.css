@@ -123,9 +123,9 @@ header p {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Class to hide sections initially or when not active */
+/* Class to hide sections initially or when not active - ADDED !important */
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 section h2 {
@@ -401,6 +401,30 @@ textarea {
     font-size: 0.95em;
 }
 
+/* New: Styling for action buttons within table cells */
+.table-actions {
+    display: flex;
+    /* Use flexbox for horizontal layout */
+    flex-wrap: wrap;
+    /* Allow buttons to wrap on smaller screens if needed */
+    gap: 5px;
+    /* Space between buttons */
+    justify-content: flex-start;
+    /* Align buttons to the start */
+    align-items: center;
+    /* Vertically align them */
+}
+
+.table-actions .btn {
+    padding: 6px 10px;
+    /* Smaller padding for buttons in tables */
+    font-size: 0.85em;
+    /* Smaller font size */
+    flex-shrink: 0;
+    /* Prevent buttons from shrinking too much */
+}
+
+
 /* Status-specific styling */
 .status-New {
     background-color: #fff3cd;
@@ -502,20 +526,51 @@ td select {
     font-size: 0.9em;
 }
 
-/* Report output */
+/* Report Section Styling */
+#reports-section {
+    display: flex;
+    flex-direction: column;
+    /* Stack report items vertically */
+    gap: 20px;
+    /* Space between each report item */
+}
+
+.report-item {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    /* Use flexbox for button and output */
+    flex-direction: column;
+    /* Stack button and output */
+    gap: 15px;
+    /* Space between button and its output */
+}
+
+.report-item .report-toggle-btn {
+    align-self: flex-start;
+    /* Align button to the start within its item */
+    margin-bottom: 0;
+    /* Reset default button margin */
+}
+
 .report-output {
     background-color: #e9ecef;
     border-left: 5px solid #007bff;
     padding: 15px;
-    margin-top: 20px;
     border-radius: 8px;
-    display: none;
-    /* Hidden by default */
+    /* display: none; -> handled by JS 'hidden' class */
 }
 
 .report-output h3 {
     margin-top: 0;
     color: #0056b3;
+    border-bottom: 1px solid #cce5ff;
+    /* Lighter border for report sub-headings */
+    padding-bottom: 5px;
+    margin-bottom: 10px;
 }
 
 .report-output ul {
@@ -653,13 +708,15 @@ td select {
 
 /* Info Display in Modal (common styles) */
 .customer-info-display p,
-.product-info-display p {
+.product-info-display p,
+.stock-info-display p {
     margin-bottom: 8px;
     font-size: 1em;
 }
 
 .customer-info-display p strong,
-.product-info-display p strong {
+.product-info-display p strong,
+.stock-info-display p strong {
     color: #555;
     display: inline-block;
     /* For consistent alignment */
@@ -669,7 +726,8 @@ td select {
 
 /* Editable Fields in Modal (common styles) */
 .customer-editable-fields,
-.product-editable-fields {
+.product-editable-fields,
+.stock-editable-fields {
     background-color: #e9ecef;
     padding: 20px;
     border-radius: 8px;
@@ -678,7 +736,8 @@ td select {
 }
 
 .customer-editable-fields h3,
-.product-editable-fields h3 {
+.product-editable-fields h3,
+.stock-editable-fields h3 {
     margin-top: 0;
     margin-bottom: 15px;
     color: #0056b3;
@@ -688,12 +747,14 @@ td select {
 }
 
 .customer-editable-fields .form-group,
-.product-editable-fields .form-group {
+.product-editable-fields .form-group,
+.stock-editable-fields .form-group {
     margin-bottom: 10px;
 }
 
 .customer-editable-fields label,
-.product-editable-fields label {
+.product-editable-fields label,
+.stock-editable-fields label {
     font-weight: normal;
     /* Override general bold */
 }
@@ -702,7 +763,9 @@ td select {
 .customer-editable-fields textarea,
 .product-editable-fields input[type="text"],
 .product-editable-fields input[type="number"],
-.product-editable-fields textarea {
+.product-editable-fields textarea,
+.stock-editable-fields input[type="number"],
+.stock-editable-fields select {
     background-color: #fff;
 }
 
@@ -884,6 +947,84 @@ td select {
     padding: 10px;
 }
 
+/* Global Alert Message Styling */
+.alert {
+    position: fixed;
+    /* Fixes the message to the viewport */
+    top: 20px;
+    /* Distance from the top */
+    left: 50%;
+    /* Start at the center horizontally */
+    transform: translateX(-50%);
+    /* Pull back by half its width to truly center */
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    z-index: 2000;
+    /* Ensure it's above everything else, including modals */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    /* Start hidden for fade-in */
+    animation: fadeInOut 5s forwards;
+    /* Animation for fade in, stay, fade out */
+    min-width: 250px;
+    /* Ensure readability */
+    max-width: 90%;
+    /* Max width for responsiveness */
+}
+
+.alert.info {
+    background-color: #17a2b8;
+    /* Bootstrap info blue */
+}
+
+.alert.success {
+    background-color: #28a745;
+    /* Bootstrap success green */
+}
+
+.alert.error {
+    background-color: #dc3545;
+    /* Bootstrap error red */
+}
+
+.alert.warning {
+    background-color: #ffc107;
+    /* Bootstrap warning yellow */
+    color: #333;
+    /* Darker text for yellow background */
+}
+
+/* Keyframes for fade in and fade out animation */
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+
+    /* Start slightly above and faded */
+    10% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* Fade in and settle */
+    90% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* Stay visible */
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+
+    /* Fade out and move up */
+}
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -1000,7 +1141,8 @@ td select {
     }
 
     .customer-info-display p strong,
-    .product-info-display p strong {
+    .product-info-display p strong,
+    .stock-info-display p strong {
         width: 90px;
         /* Smaller fixed width for labels in modal on small screens */
     }
@@ -1022,6 +1164,24 @@ td select {
         width: 100%;
         min-width: unset;
         height: auto;
+    }
+
+    .alert {
+        top: 10px;
+        /* Closer to the top on mobile */
+        padding: 10px 15px;
+        font-size: 0.9em;
+    }
+
+    .table-actions {
+        flex-direction: column;
+        /* Stack buttons vertically on small screens */
+        align-items: stretch;
+    }
+
+    .table-actions .btn {
+        width: 100%;
+        /* Full width for stacked buttons */
     }
 }
 

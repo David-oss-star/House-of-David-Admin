@@ -212,6 +212,7 @@
                 <th>Unit</th>
                 <th>Reorder Point</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -246,6 +247,11 @@
                 <th>Add-on Name</th>
                 <th>Price (Le)</th>
                 <th>Unit</th>
+                <th>Current Stock</th>
+                <th>Unit Cost (Le)</th>
+                <th>Total Value (Le)</th>
+                <th>Reorder Point</th>
+                <th>Status</th>
                 <th>Active</th>
                 <th>Actions</th>
               </tr>
@@ -411,6 +417,36 @@
                 required
               />
             </div>
+            <div class="form-group">
+              <label for="newAddOnCurrentStock">Current Stock:</label>
+              <input
+                type="number"
+                id="newAddOnCurrentStock"
+                step="0.01"
+                value="0"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="newAddOnUnitCost">Unit Cost (Le, Optional):</label>
+              <input
+                type="number"
+                id="newAddOnUnitCost"
+                step="0.01"
+                value="0"
+              />
+            </div>
+            <div class="form-group">
+              <label for="newAddOnReorderPoint"
+                >Reorder Point (Optional):</label
+              >
+              <input
+                type="number"
+                id="newAddOnReorderPoint"
+                step="0.01"
+                value="0"
+              />
+            </div>
             <div class="form-group checkbox-group">
               <input type="checkbox" id="newAddOnIsActive" checked />
               <label for="newAddOnIsActive">Is Active</label>
@@ -422,18 +458,39 @@
 
       <section id="reports-section" class="content-section hidden">
         <h2>Reports</h2>
-        <button class="btn primary" id="generateDailySummary">
-          Generate Daily Summary
-        </button>
-        <div id="dailySummaryOutput" class="report-output"></div>
-        <button class="btn primary" id="generateSalesByBundle">
-          Generate Sales by Bundle (Last 30 Days)
-        </button>
-        <div id="salesByBundleOutput" class="report-output"></div>
-        <button class="btn primary" id="generateAgentPerformance">
-          Generate Agent Performance (Last 30 Days)
-        </button>
-        <div id="agentPerformanceOutput" class="report-output"></div>
+
+        <div class="report-item">
+          <button
+            class="btn primary report-toggle-btn"
+            data-target-report="dailySummaryOutput"
+            id="generateDailySummary"
+          >
+            Generate Daily Summary
+          </button>
+          <div id="dailySummaryOutput" class="report-output hidden"></div>
+        </div>
+
+        <div class="report-item">
+          <button
+            class="btn primary report-toggle-btn"
+            data-target-report="salesByBundleOutput"
+            id="generateSalesByBundle"
+          >
+            Generate Sales by Bundle (Last 30 Days)
+          </button>
+          <div id="salesByBundleOutput" class="report-output hidden"></div>
+        </div>
+
+        <div class="report-item">
+          <button
+            class="btn primary report-toggle-btn"
+            data-target-report="agentPerformanceOutput"
+            id="generateAgentPerformance"
+          >
+            Generate Agent Performance (Last 30 Days)
+          </button>
+          <div id="agentPerformanceOutput" class="report-output hidden"></div>
+        </div>
       </section>
 
       <section id="dashboard-section" class="content-section hidden">
@@ -546,6 +603,21 @@
             <strong>Description:</strong>
             <span id="modalProductDescription"></span>
           </p>
+          <p>
+            <strong>Current Stock:</strong>
+            <span id="modalProductCurrentStock"></span>
+          </p>
+          <p>
+            <strong>Unit Cost:</strong> <span id="modalProductUnitCost"></span>
+          </p>
+          <p>
+            <strong>Total Value:</strong>
+            <span id="modalProductTotalValue"></span>
+          </p>
+          <p>
+            <strong>Reorder Point:</strong>
+            <span id="modalProductReorderPoint"></span>
+          </p>
           <p><strong>Active:</strong> <span id="modalProductActive"></span></p>
         </div>
 
@@ -571,7 +643,27 @@
             <label for="modalEditProductDescription">Description:</label>
             <textarea id="modalEditProductDescription" rows="3"></textarea>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="editProductCurrentStockGroup">
+            <label for="modalEditProductCurrentStock">Current Stock:</label>
+            <input
+              type="number"
+              id="modalEditProductCurrentStock"
+              step="0.01"
+            />
+          </div>
+          <div class="form-group" id="editProductUnitCostGroup">
+            <label for="modalEditProductUnitCost">Unit Cost (Le):</label>
+            <input type="number" id="modalEditProductUnitCost" step="0.01" />
+          </div>
+          <div class="form-group" id="editProductReorderPointGroup">
+            <label for="modalEditProductReorderPoint">Reorder Point:</label>
+            <input
+              type="number"
+              id="modalEditProductReorderPoint"
+              step="0.01"
+            />
+          </div>
+          <div class="form-group checkbox-group">
             <input type="checkbox" id="modalEditProductActive" />
             <label for="modalEditProductActive">Is Active</label>
           </div>
@@ -617,6 +709,71 @@
         >
           No orders found for this product.
         </p>
+      </div>
+    </div>
+
+    <!-- Stock Update Modal -->
+    <div id="stockUpdateModal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close-button" id="stockModalCloseButton">&times;</span>
+        <h2 id="stockModalTitle">Update Stock</h2>
+        <div class="stock-info-display">
+          <p><strong>Item:</strong> <span id="stockModalItemName"></span></p>
+          <p>
+            <strong>Current Stock:</strong>
+            <span id="stockModalCurrentStock"></span>
+            <span id="stockModalUnit"></span>
+          </p>
+          <p id="stockModalUnitCostP">
+            <strong>Last Unit Cost:</strong>
+            <span id="stockModalUnitCost"></span>
+          </p>
+          <p id="stockModalTotalValueP">
+            <strong>Current Total Value:</strong>
+            <span id="stockModalTotalValue"></span>
+          </p>
+        </div>
+
+        <div class="stock-editable-fields">
+          <h3>Stock Adjustment</h3>
+          <div class="form-group">
+            <label for="stockAdjustmentType">Adjustment Type:</label>
+            <select id="stockAdjustmentType">
+              <option value="restock">Restock (Increase)</option>
+              <option value="consumption">Consumption (Decrease)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="stockQuantityChange">Quantity Change:</label>
+            <input
+              type="number"
+              id="stockQuantityChange"
+              step="0.01"
+              value="0"
+              required
+            />
+          </div>
+          <div class="form-group" id="newUnitCostGroup">
+            <label for="newUnitCost">New Unit Cost (Le, for Restock):</label>
+            <input
+              type="number"
+              id="newUnitCost"
+              step="0.01"
+              placeholder="Enter cost per unit for restock"
+            />
+          </div>
+          <p
+            class="form-note"
+            id="estimatedRestockValueNote"
+            style="display: none"
+          >
+            Estimated Restock Value:
+            <strong id="estimatedRestockValue">Le 0.00</strong>
+          </p>
+          <button class="btn primary" id="saveStockUpdateBtn">
+            Update Stock
+          </button>
+        </div>
       </div>
     </div>
 
