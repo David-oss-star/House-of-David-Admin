@@ -729,6 +729,162 @@ td select {
 }
 
 
+/* New Inventory Add Forms */
+.add-inventory-toggle {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    font-size: 1.8em;
+    color: #333;
+}
+
+.add-inventory-toggle .btn {
+    flex-shrink: 0;
+    /* Prevent button from shrinking */
+    padding: 8px 15px;
+    font-size: 1em;
+    margin-left: auto;
+    /* Push button to the right */
+}
+
+.collapsible-section {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: -10px;
+    /* Pull it up slightly to merge with heading border */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.inventory-add-form {
+    border: 1px solid #cce5ff;
+    background-color: #eaf6ff;
+    /* Very light blue background */
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.inventory-add-form h4 {
+    color: #0056b3;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #a3daff;
+    padding-bottom: 5px;
+}
+
+.inventory-add-form .form-group.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.inventory-add-form .form-group.checkbox-group label {
+    margin-bottom: 0;
+    font-weight: normal;
+}
+
+.inventory-add-form .form-group.checkbox-group input[type="checkbox"] {
+    margin-right: 10px;
+    width: auto;
+}
+
+.full-width-select {
+    width: 100%;
+}
+
+.recipe-heading {
+    margin-top: 25px !important;
+    /* Override other h4 margins */
+    margin-bottom: 15px !important;
+    border-bottom: 1px solid #a3daff !important;
+    padding-bottom: 5px !important;
+}
+
+.add-recipe-item-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    /* Align inputs at the bottom */
+    border-top: 1px dashed #cce5ff;
+    padding-top: 15px;
+    margin-top: 20px;
+}
+
+.add-recipe-item-controls select,
+.add-recipe-item-controls input[type="number"],
+.add-recipe-item-controls input[type="text"] {
+    flex: 1;
+    /* Allow inputs to grow */
+    min-width: 120px;
+    /* Minimum width for each input */
+    margin-bottom: 0;
+    /* Reset margin from .form-group */
+}
+
+.add-recipe-item-controls .btn {
+    flex-shrink: 0;
+    /* Prevent button from shrinking */
+    height: 40px;
+    /* Match input height */
+    margin-top: 0;
+    /* Reset margin */
+}
+
+#bundleRecipeInputs {
+    border: 1px dashed #cce5ff;
+    padding: 10px;
+    border-radius: 5px;
+    min-height: 50px;
+    /* Provide some visual space */
+    background-color: #f3f9ff;
+}
+
+#bundleRecipeInputs .recipe-item-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px dotted #e0e0e0;
+}
+
+#bundleRecipeInputs .recipe-item-row:last-child {
+    border-bottom: none;
+}
+
+#bundleRecipeInputs .recipe-item-row span {
+    flex-grow: 1;
+}
+
+#bundleRecipeInputs .recipe-item-row .remove-recipe-item-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.2em;
+    padding: 2px 5px;
+    border-radius: 4px;
+}
+
+#bundleRecipeInputs .recipe-item-row .remove-recipe-item-btn:hover {
+    background-color: #f8d7da;
+}
+
+.no-recipe-items {
+    text-align: center;
+    color: #777;
+    font-style: italic;
+    padding: 10px;
+}
+
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     body {
@@ -750,6 +906,18 @@ td select {
 
     section#inventory-section h3 {
         font-size: 1.3em;
+    }
+
+    .add-inventory-toggle {
+        font-size: 1.5em;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .add-inventory-toggle .btn {
+        width: 100%;
+        margin-left: 0;
     }
 
     .form-group input,
@@ -841,6 +1009,19 @@ td select {
         font-size: 30px;
         top: 5px;
         right: 10px;
+    }
+
+    .add-recipe-item-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .add-recipe-item-controls select,
+    .add-recipe-item-controls input,
+    .add-recipe-item-controls .btn {
+        width: 100%;
+        min-width: unset;
+        height: auto;
     }
 }
 

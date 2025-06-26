@@ -56,14 +56,20 @@ def add_ingredient():
         "unit": "kg",
         "current_stock": 50,
         "reorder_point": 10,
-        "last_cost_per_unit": 200
+        "last_cost_per_unit": 200,
+        "supplier": "Local Farm" // Optional
     }
     """
     new_ingredient_data = request.json
     ingredients = _get_all_ingredients()
 
     if not all(k in new_ingredient_data for k in ['name', 'unit', 'current_stock']):
-        return jsonify({'error': 'Missing required ingredient fields'}), 400
+        return jsonify({'error': 'Missing required ingredient fields (name, unit, current_stock)'}), 400
+    
+    # Check for duplicate ingredient name (case-insensitive)
+    if any(i['name'].lower() == new_ingredient_data['name'].lower() for i in ingredients):
+        return jsonify({'error': 'Ingredient with this name already exists'}), 409
+
 
     new_ingredient_data['id'] = str(uuid.uuid4())
     new_ingredient_data['reorder_point'] = new_ingredient_data.get('reorder_point', 0)
@@ -131,6 +137,41 @@ def get_bundle(bundle_id):
         return jsonify(bundle)
     return jsonify({'error': 'Bundle not found'}), 404
 
+@inventory_bp.route('/bundles', methods=['POST'])
+def add_bundle():
+    """
+    Adds a new meal bundle.
+    Expected Request Body:
+    {
+        "name": "New Veggie Delight",
+        "base_price": 75.00,
+        "description": "A delicious vegetarian meal.",
+        "is_active": true,
+        "recipe": [
+            {"ingredient_id": "uuid_carrot", "quantity": 0.5, "unit": "kg"},
+            {"ingredient_id": "uuid_potato", "quantity": 1.0, "unit": "kg"}
+        ]
+    }
+    """
+    new_bundle_data = request.json
+    bundles = _get_all_bundles()
+
+    if not all(k in new_bundle_data for k in ['name', 'base_price', 'description']):
+        return jsonify({'error': 'Missing required bundle fields (name, base_price, description)'}), 400
+    
+    # Check for duplicate bundle name (case-insensitive)
+    if any(b['name'].lower() == new_bundle_data['name'].lower() for b in bundles):
+        return jsonify({'error': 'Bundle with this name already exists'}), 409
+
+    new_bundle_data['id'] = str(uuid.uuid4())
+    new_bundle_data['is_active'] = new_bundle_data.get('is_active', True) # Default to active
+    new_bundle_data['recipe'] = new_bundle_data.get('recipe', []) # Default to empty list
+
+    bundles.append(new_bundle_data)
+    _save_all_bundles(bundles)
+    return jsonify(new_bundle_data), 201
+
+
 @inventory_bp.route('/bundles/<string:bundle_id>', methods=['PUT'])
 def update_bundle(bundle_id):
     """
@@ -152,6 +193,9 @@ def update_bundle(bundle_id):
     for i, bundle in enumerate(bundles):
         if bundle['id'] == bundle_id:
             for key, value in updated_data.items():
+                # For recipe, replace entirely or merge as needed; here, simple replace
+                if key == 'recipe' and not isinstance(value, list):
+                    return jsonify({'error': 'Recipe must be a list of ingredient objects'}), 400
                 bundle[key] = value
             bundles[i] = bundle
             _save_all_bundles(bundles)
@@ -205,6 +249,36 @@ def get_add_on(add_on_id):
     if add_on:
         return jsonify(add_on)
     return jsonify({'error': 'Add-on not found'}), 404
+
+@inventory_bp.route('/add-ons', methods=['POST'])
+def add_add_on():
+    """
+    Adds a new add-on.
+    Expected Request Body:
+    {
+        "name": "Extra Gravy",
+        "price": 50.00,
+        "unit": "cup", // e.g., "piece", "cup", "portion"
+        "is_active": true
+    }
+    """
+    new_add_on_data = request.json
+    add_ons = _get_all_add_ons()
+
+    if not all(k in new_add_on_data for k in ['name', 'price', 'unit']):
+        return jsonify({'error': 'Missing required add-on fields (name, price, unit)'}), 400
+    
+    # Check for duplicate add-on name (case-insensitive)
+    if any(ao['name'].lower() == new_add_on_data['name'].lower() for ao in add_ons):
+        return jsonify({'error': 'Add-on with this name already exists'}), 409
+
+
+    new_add_on_data['id'] = str(uuid.uuid4())
+    new_add_on_data['is_active'] = new_add_on_data.get('is_active', True) # Default to active
+
+    add_ons.append(new_add_on_data)
+    _save_all_add_ons(add_ons)
+    return jsonify(new_add_on_data), 201
 
 @inventory_bp.route('/add-ons/<string:add_on_id>', methods=['PUT'])
 def update_add_on(add_on_id):

@@ -27,6 +27,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const bundlesTableBody = document.querySelector('#bundlesTable tbody');
     const addOnsTableBody = document.querySelector('#addOnsTable tbody');
 
+    // New inventory add elements
+    const toggleAddInventoryFormBtn = document.getElementById('toggleAddInventoryFormBtn');
+    const addInventoryFormContainer = document.getElementById('addInventoryFormContainer');
+    const inventoryItemTypeSelect = document.getElementById('inventoryItemType');
+    const addIngredientForm = document.getElementById('addIngredientForm');
+    const addBundleForm = document.getElementById('addBundleForm');
+    const addAddOnForm = document.getElementById('addAddOnForm');
+
+    const newIngredientNameInput = document.getElementById('newIngredientName');
+    const newIngredientUnitInput = document.getElementById('newIngredientUnit');
+    const newIngredientCurrentStockInput = document.getElementById('newIngredientCurrentStock');
+    const newIngredientReorderPointInput = document.getElementById('newIngredientReorderPoint');
+    const newIngredientLastCostInput = document.getElementById('newIngredientLastCost');
+    const newIngredientSupplierInput = document.getElementById('newIngredientSupplier');
+
+    const newBundleNameInput = document.getElementById('newBundleName');
+    const newBundleBasePriceInput = document.getElementById('newBundleBasePrice');
+    const newBundleDescriptionInput = document.getElementById('newBundleDescription');
+    const newBundleIsActiveCheckbox = document.getElementById('newBundleIsActive');
+    const bundleRecipeInputsContainer = document.getElementById('bundleRecipeInputs');
+    const recipeIngredientSelect = document.getElementById('recipeIngredientSelect');
+    const recipeQuantityInput = document.getElementById('recipeQuantity');
+    const recipeUnitInput = document.getElementById('recipeUnit');
+    const addRecipeItemBtn = document.getElementById('addRecipeItemBtn');
+    let currentBundleRecipe = []; // Stores recipe items for the new bundle form
+
+    const newAddOnNameInput = document.getElementById('newAddOnName');
+    const newAddOnPriceInput = document.getElementById('newAddOnPrice');
+    const newAddOnUnitInput = document.getElementById('newAddOnUnit');
+    const newAddOnIsActiveCheckbox = document.getElementById('newAddOnIsActive');
+
+
     const generateDailySummaryBtn = document.getElementById('generateDailySummary');
     const dailySummaryOutput = document.getElementById('dailySummaryOutput');
     const generateSalesByBundleBtn = document.getElementById('generateSalesByBundle');
@@ -53,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCustomerOrdersTableBody = document.querySelector('#modalCustomerOrdersTable tbody');
     const noCustomerOrdersMessage = document.getElementById('noCustomerOrdersMessage');
 
-    // Product Details Modal elements (new)
+    // Product Details Modal elements
     const productDetailsModal = document.getElementById('productDetailsModal');
     const productModalCloseButton = document.getElementById('productModalCloseButton');
     const productModalTitle = document.getElementById('productModalTitle');
@@ -85,9 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const bundleRecipeTitle = document.getElementById('bundleRecipeTitle');
     const modalProductRecipe = document.getElementById('modalProductRecipe');
 
-    let currentModalCustomerId = null; // Store the ID of the customer currently open in the customer modal
-    let currentModalProductId = null; // Store the ID of the product currently open in the product modal
-    let currentModalProductType = null; // 'bundle' or 'addon'
+    let currentModalCustomerId = null;
+    let currentModalProductId = null;
+    let currentModalProductType = null;
 
     // Navigation elements
     const navLinks = document.querySelectorAll('.nav-link');
@@ -111,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => msgDiv.remove(), 5000);
     }
 
-    // Function to fetch and populate dropdowns (Customers, Bundles, Add-ons, Agents)
+    // Function to fetch and populate dropdowns (Customers, Bundles, Add-ons, Agents, Ingredients for recipe)
     async function populateFormDropdowns() {
         try {
             // Fetch Customers
@@ -125,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 customerIdSelect.appendChild(option);
             });
 
-            // Fetch Bundles (re-fetch to ensure latest data for forms)
+            // Fetch Bundles (re-fetch to ensure latest data for forms and main tables)
             const bundleResponse = await fetch('/api/inventory/bundles');
             allBundles = await bundleResponse.json();
             bundleIdSelect.innerHTML = '<option value="">Select Bundle</option>';
@@ -139,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bundleIdSelect.addEventListener('change', calculateTotalPrice);
 
 
-            // Fetch Add-ons and create checkboxes (re-fetch to ensure latest data for forms)
+            // Fetch Add-ons and create checkboxes (re-fetch to ensure latest data for forms and main tables)
             const addOnResponse = await fetch('/api/inventory/add-ons');
             allAddOns = await addOnResponse.json();
             addOnsContainer.innerHTML = '';
@@ -174,6 +206,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 option.textContent = agent.name;
                 agentFilterSelect.appendChild(option);
             });
+
+            // Fetch Ingredients for Recipe Selector (NEW)
+            const ingredientResponse = await fetch('/api/inventory/ingredients');
+            allIngredients = await ingredientResponse.json(); // Update global allIngredients
+            recipeIngredientSelect.innerHTML = '<option value="">Select Ingredient</option>';
+            allIngredients.forEach(ingredient => {
+                const option = document.createElement('option');
+                option.value = ingredient.id;
+                option.textContent = `${ingredient.name} (${ingredient.unit})`;
+                recipeIngredientSelect.appendChild(option);
+            });
+
 
         } catch (error) {
             console.error('Error populating dropdowns:', error);
@@ -515,7 +559,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const searchTerm = searchInput.value.toLowerCase();
         if (searchTerm) {
-            // Updated to use the enriched customer data directly from the order object
             filteredOrders = filteredOrders.filter(order =>
                 (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm)) ||
                 (order.whatsapp_number && order.whatsapp_number.toLowerCase().includes(searchTerm)) ||
@@ -718,28 +761,38 @@ document.addEventListener('DOMContentLoaded', () => {
     saveCustomerDetailsBtn.addEventListener('click', saveCustomerDetails);
 
 
-    // --- Inventory Display ---
+    // --- Inventory Display & Add New Item Logic ---
     async function fetchAndRenderInventory() {
         try {
+            // Re-fetch allIngredients to ensure recipe dropdown is up-to-date
             const ingredientsResponse = await fetch('/api/inventory/ingredients');
             if (!ingredientsResponse.ok) throw new Error('Failed to load ingredients.');
             allIngredients = await ingredientsResponse.json();
             renderIngredients(allIngredients);
 
+            // Populate recipe ingredient select
+            recipeIngredientSelect.innerHTML = '<option value="">Select Ingredient</option>';
+            allIngredients.forEach(ingredient => {
+                const option = document.createElement('option');
+                option.value = ingredient.id;
+                option.textContent = `${ingredient.name} (${ingredient.unit})`;
+                recipeIngredientSelect.appendChild(option);
+            });
+
+
             const bundlesResponse = await fetch('/api/inventory/bundles');
             if (!bundlesResponse.ok) throw new Error('Failed to load bundles.');
-            allBundles = await bundlesResponse.json(); // Update global allBundles
+            allBundles = await bundlesResponse.json();
             renderBundles(allBundles);
 
             const addOnsResponse = await fetch('/api/inventory/add-ons');
             if (!addOnsResponse.ok) throw new Error('Failed to load add-ons.');
-            allAddOns = await addOnsResponse.json(); // Update global allAddOns
+            allAddOns = await addOnsResponse.json();
             renderAddOns(allAddOns);
 
         } catch (error) {
             console.error('Error fetching inventory:', error);
             showMessage(`Failed to load inventory data: ${error.message}`, 'error');
-            // Clear tables on error
             ingredientsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load ingredients.</td></tr>';
             bundlesTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load bundles.</td></tr>';
             addOnsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load add-ons.</td></tr>';
@@ -824,6 +877,219 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Toggle "Add New Inventory Item" form visibility
+    toggleAddInventoryFormBtn.addEventListener('click', () => {
+        const isHidden = addInventoryFormContainer.style.display === 'none';
+        addInventoryFormContainer.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) {
+            // Reset form selections and hide all sub-forms when opening
+            inventoryItemTypeSelect.value = '';
+            hideAllInventoryAddForms();
+        }
+    });
+
+    // Handle selection of inventory item type to add
+    inventoryItemTypeSelect.addEventListener('change', (event) => {
+        hideAllInventoryAddForms(); // Hide all forms first
+        const selectedType = event.target.value;
+        if (selectedType === 'ingredient') {
+            addIngredientForm.classList.remove('hidden');
+        } else if (selectedType === 'bundle') {
+            addBundleForm.classList.remove('hidden');
+            currentBundleRecipe = []; // Reset recipe for new bundle
+            renderBundleRecipeItems();
+        } else if (selectedType === 'addon') {
+            addAddOnForm.classList.remove('hidden');
+        }
+    });
+
+    function hideAllInventoryAddForms() {
+        addIngredientForm.classList.add('hidden');
+        addBundleForm.classList.add('hidden');
+        addAddOnForm.classList.add('hidden');
+    }
+
+    // Add Ingredient Form Submission
+    addIngredientForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newIngredient = {
+            name: newIngredientNameInput.value.trim(),
+            unit: newIngredientUnitInput.value.trim(),
+            current_stock: parseFloat(newIngredientCurrentStockInput.value),
+            reorder_point: parseFloat(newIngredientReorderPointInput.value) || 0,
+            last_cost_per_unit: parseFloat(newIngredientLastCostInput.value) || 0,
+            supplier: newIngredientSupplierInput.value.trim()
+        };
+
+        if (!newIngredient.name || !newIngredient.unit || isNaN(newIngredient.current_stock)) {
+            showMessage('Please fill in required ingredient fields: Name, Unit, Current Stock.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/inventory/ingredients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newIngredient)
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+            showMessage('Ingredient added successfully!', 'success');
+            addIngredientForm.reset();
+            fetchAndRenderInventory(); // Refresh ingredients table
+            populateFormDropdowns(); // Re-populate global dropdowns if needed (like for bundle recipe)
+        } catch (error) {
+            console.error('Error adding ingredient:', error);
+            showMessage(`Failed to add ingredient: ${error.message}`, 'error');
+        }
+    });
+
+    // Bundle Recipe Management (dynamic adding/removing)
+    addRecipeItemBtn.addEventListener('click', () => {
+        const selectedIngredientId = recipeIngredientSelect.value;
+        const quantity = parseFloat(recipeQuantityInput.value);
+        const unit = recipeUnitInput.value.trim();
+
+        if (!selectedIngredientId || isNaN(quantity) || quantity <= 0 || !unit) {
+            showMessage('Please select an ingredient, enter a valid quantity, and unit for the recipe item.', 'error');
+            return;
+        }
+
+        const ingredient = allIngredients.find(ing => ing.id === selectedIngredientId);
+        if (!ingredient) {
+            showMessage('Selected ingredient not found.', 'error');
+            return;
+        }
+
+        // Check if ingredient already in recipe
+        const existingItem = currentBundleRecipe.find(item => item.ingredient_id === selectedIngredientId);
+        if (existingItem) {
+            showMessage('This ingredient is already in the recipe. Edit the existing one or remove it first.', 'warning');
+            return;
+        }
+
+        currentBundleRecipe.push({
+            ingredient_id: selectedIngredientId,
+            name: ingredient.name, // Store name for display purposes
+            quantity: quantity,
+            unit: unit
+        });
+
+        renderBundleRecipeItems();
+        recipeIngredientSelect.value = ''; // Clear inputs
+        recipeQuantityInput.value = '0';
+        recipeUnitInput.value = '';
+    });
+
+    function renderBundleRecipeItems() {
+        bundleRecipeInputsContainer.innerHTML = '';
+        if (currentBundleRecipe.length === 0) {
+            bundleRecipeInputsContainer.innerHTML = '<p class="no-recipe-items">No ingredients added yet.</p>';
+            return;
+        }
+
+        currentBundleRecipe.forEach((item, index) => {
+            const recipeItemDiv = document.createElement('div');
+            recipeItemDiv.classList.add('recipe-item-row');
+            recipeItemDiv.innerHTML = `
+                <span>${item.name}: ${item.quantity} ${item.unit}</span>
+                <button type="button" class="remove-recipe-item-btn" data-index="${index}">&times;</button>
+            `;
+            bundleRecipeInputsContainer.appendChild(recipeItemDiv);
+        });
+
+        bundleRecipeInputsContainer.querySelectorAll('.remove-recipe-item-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToRemove = parseInt(e.target.dataset.index);
+                currentBundleRecipe.splice(indexToRemove, 1);
+                renderBundleRecipeItems();
+            });
+        });
+    }
+
+    // Add Bundle Form Submission
+    addBundleForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newBundle = {
+            name: newBundleNameInput.value.trim(),
+            base_price: parseFloat(newBundleBasePriceInput.value),
+            description: newBundleDescriptionInput.value.trim(),
+            is_active: newBundleIsActiveCheckbox.checked,
+            recipe: currentBundleRecipe.map(item => ({ // Send only necessary data for recipe
+                ingredient_id: item.ingredient_id,
+                quantity: item.quantity,
+                unit: item.unit
+            }))
+        };
+
+        if (!newBundle.name || isNaN(newBundle.base_price) || newBundle.base_price <= 0 || !newBundle.description) {
+            showMessage('Please fill in required bundle fields: Name, Base Price, Description.', 'error');
+            return;
+        }
+        if (newBundle.recipe.length === 0) {
+            showMessage('Please add at least one ingredient to the bundle recipe.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/inventory/bundles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newBundle)
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+            showMessage('Bundle added successfully!', 'success');
+            addBundleForm.reset();
+            currentBundleRecipe = []; // Clear recipe for next entry
+            renderBundleRecipeItems();
+            fetchAndRenderInventory(); // Refresh bundles table
+            populateFormDropdowns(); // Re-populate global dropdowns
+        } catch (error) {
+            console.error('Error adding bundle:', error);
+            showMessage(`Failed to add bundle: ${error.message}`, 'error');
+        }
+    });
+
+    // Add Add-on Form Submission
+    addAddOnForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newAddOn = {
+            name: newAddOnNameInput.value.trim(),
+            price: parseFloat(newAddOnPriceInput.value),
+            unit: newAddOnUnitInput.value.trim(),
+            is_active: newAddOnIsActiveCheckbox.checked
+        };
+
+        if (!newAddOn.name || isNaN(newAddOn.price) || newAddOn.price <= 0 || !newAddOn.unit) {
+            showMessage('Please fill in required add-on fields: Name, Price, Unit.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/inventory/add-ons', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newAddOn)
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+            showMessage('Add-on added successfully!', 'success');
+            addAddOnForm.reset();
+            fetchAndRenderInventory(); // Refresh add-ons table
+            populateFormDropdowns(); // Re-populate global dropdowns
+        } catch (error) {
+            console.error('Error adding add-on:', error);
+            showMessage(`Failed to add add-on: ${error.message}`, 'error');
+        }
+    });
+
 
     // --- Product Details Modal Logic ---
     async function openProductDetailsModal(event) {
@@ -831,7 +1097,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentModalProductType = event.target.dataset.productType; // 'bundle' or 'addon'
         if (!currentModalProductId || !currentModalProductType) return;
 
-        // Determine the correct path segment ('bundles' or 'add-ons')
         const pathSegment = currentModalProductType === 'addon' ? 'add-ons' : currentModalProductType + 's';
 
         try {
@@ -844,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const productOrders = await ordersResponse.json();
 
             populateProductDetailsModal(product, productOrders, currentModalProductType);
-            productDetailsModal.classList.remove('hidden'); // Show the modal
+            productDetailsModal.classList.remove('hidden');
         } catch (error) {
             console.error(`Error opening ${currentModalProductType} details:`, error);
             showMessage(`Failed to load ${currentModalProductType} details: ${error.message}`, 'error');
@@ -862,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalProductName.textContent = product.name;
         modalProductId.textContent = product.id.substring(0, 8) + '...';
 
-        // Hide/show fields based on type
+        // Hide/show info display fields based on type
         productBasePriceP.style.display = 'none';
         productPriceP.style.display = 'none';
         productUnitP.style.display = 'none';
@@ -870,13 +1135,14 @@ document.addEventListener('DOMContentLoaded', () => {
         bundleRecipeTitle.style.display = 'none';
         modalProductRecipe.style.display = 'none';
 
+        // Hide/show editable fields based on type
         editProductBasePriceGroup.style.display = 'none';
         editProductPriceGroup.style.display = 'none';
         editProductUnitGroup.style.display = 'none';
         editProductDescriptionGroup.style.display = 'none';
 
         modalEditProductName.value = product.name;
-        modalEditProductActive.checked = product.is_active || false; // Default to false if undefined
+        modalEditProductActive.checked = product.is_active || false;
 
         if (type === 'bundle') {
             productBasePriceP.style.display = 'block';
@@ -889,14 +1155,12 @@ document.addEventListener('DOMContentLoaded', () => {
             editProductDescriptionGroup.style.display = 'block';
             modalEditProductDescription.value = product.description || '';
 
-            // Display recipe
             bundleRecipeTitle.style.display = 'block';
             modalProductRecipe.style.display = 'block';
-            modalProductRecipe.innerHTML = ''; // Clear previous recipe
+            modalProductRecipe.innerHTML = '';
             if (product.recipe && product.recipe.length > 0) {
                 const ul = document.createElement('ul');
                 product.recipe.forEach(item => {
-                    // Need to look up ingredient name using its ID
                     const ingredient = allIngredients.find(ing => ing.id === item.ingredient_id);
                     const ingredientName = ingredient ? ingredient.name : 'Unknown Ingredient';
                     const li = document.createElement('li');
@@ -964,7 +1228,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updatedData.unit = modalEditProductUnit.value.trim();
         }
 
-        // Determine the correct path segment ('bundles' or 'add-ons')
         const pathSegment = currentModalProductType === 'addon' ? 'add-ons' : currentModalProductType + 's';
 
         try {
@@ -1093,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (targetId === 'customers-list-section') {
                 fetchAndRenderCustomers();
             } else if (targetId === 'inventory-section') {
-                fetchAndRenderInventory();
+                fetchAndRenderInventory(); // Call new general inventory fetch
             } else if (targetId === 'add-order-section') {
                 populateFormDropdowns();
                 calculateTotalPrice();

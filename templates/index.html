@@ -255,6 +255,169 @@
             </tbody>
           </table>
         </div>
+
+        <h3 class="add-inventory-toggle">
+          Add New Inventory Item
+          <button
+            type="button"
+            class="btn secondary small-btn"
+            id="toggleAddInventoryFormBtn"
+          >
+            Toggle Form
+          </button>
+        </h3>
+        <div
+          id="addInventoryFormContainer"
+          class="collapsible-section"
+          style="display: none"
+        >
+          <div class="form-group">
+            <label for="inventoryItemType">Select Item Type to Add:</label>
+            <select id="inventoryItemType" class="full-width-select">
+              <option value="">-- Select --</option>
+              <option value="ingredient">Ingredient</option>
+              <option value="bundle">Bundle</option>
+              <option value="addon">Add-on</option>
+            </select>
+          </div>
+
+          <form id="addIngredientForm" class="inventory-add-form hidden">
+            <h4>Add New Ingredient</h4>
+            <div class="form-group">
+              <label for="newIngredientName">Name:</label>
+              <input type="text" id="newIngredientName" required />
+            </div>
+            <div class="form-group">
+              <label for="newIngredientUnit">Unit:</label>
+              <input
+                type="text"
+                id="newIngredientUnit"
+                placeholder="e.g., kg, pieces, liters"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="newIngredientCurrentStock">Current Stock:</label>
+              <input
+                type="number"
+                id="newIngredientCurrentStock"
+                step="0.01"
+                value="0"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="newIngredientReorderPoint"
+                >Reorder Point (Optional):</label
+              >
+              <input
+                type="number"
+                id="newIngredientReorderPoint"
+                step="0.01"
+                value="0"
+              />
+            </div>
+            <div class="form-group">
+              <label for="newIngredientLastCost"
+                >Last Cost Per Unit (Le, Optional):</label
+              >
+              <input
+                type="number"
+                id="newIngredientLastCost"
+                step="0.01"
+                value="0"
+              />
+            </div>
+            <div class="form-group">
+              <label for="newIngredientSupplier">Supplier (Optional):</label>
+              <input type="text" id="newIngredientSupplier" />
+            </div>
+            <button type="submit" class="btn primary">Add Ingredient</button>
+          </form>
+
+          <form id="addBundleForm" class="inventory-add-form hidden">
+            <h4>Add New Meal Bundle</h4>
+            <div class="form-group">
+              <label for="newBundleName">Bundle Name:</label>
+              <input type="text" id="newBundleName" required />
+            </div>
+            <div class="form-group">
+              <label for="newBundleBasePrice">Base Price (Le):</label>
+              <input
+                type="number"
+                id="newBundleBasePrice"
+                step="0.01"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="newBundleDescription">Description:</label>
+              <textarea id="newBundleDescription" rows="2" required></textarea>
+            </div>
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="newBundleIsActive" checked />
+              <label for="newBundleIsActive">Is Active</label>
+            </div>
+
+            <h4 class="recipe-heading">Recipe (Ingredients)</h4>
+            <div id="bundleRecipeInputs">
+              <!-- Dynamic recipe input rows will be added here -->
+              <p class="no-recipe-items">No ingredients added yet.</p>
+            </div>
+            <div class="form-group add-recipe-item-controls">
+              <select id="recipeIngredientSelect">
+                <option value="">Select Ingredient</option>
+                <!-- Ingredients populated by JS -->
+              </select>
+              <input
+                type="number"
+                id="recipeQuantity"
+                step="0.01"
+                placeholder="Quantity"
+                value="0"
+              />
+              <input
+                type="text"
+                id="recipeUnit"
+                placeholder="Unit (e.g., kg)"
+              />
+              <button
+                type="button"
+                class="btn secondary small-btn"
+                id="addRecipeItemBtn"
+              >
+                Add Item to Recipe
+              </button>
+            </div>
+            <button type="submit" class="btn primary">Add Bundle</button>
+          </form>
+
+          <form id="addAddOnForm" class="inventory-add-form hidden">
+            <h4>Add New Add-on Product</h4>
+            <div class="form-group">
+              <label for="newAddOnName">Add-on Name:</label>
+              <input type="text" id="newAddOnName" required />
+            </div>
+            <div class="form-group">
+              <label for="newAddOnPrice">Price (Le):</label>
+              <input type="number" id="newAddOnPrice" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label for="newAddOnUnit">Unit:</label>
+              <input
+                type="text"
+                id="newAddOnUnit"
+                placeholder="e.g., pcs, cup, portion"
+                required
+              />
+            </div>
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="newAddOnIsActive" checked />
+              <label for="newAddOnIsActive">Is Active</label>
+            </div>
+            <button type="submit" class="btn primary">Add Add-on</button>
+          </form>
+        </div>
       </section>
 
       <section id="reports-section" class="content-section hidden">
@@ -409,8 +572,8 @@
             <textarea id="modalEditProductDescription" rows="3"></textarea>
           </div>
           <div class="form-group">
-            <label for="modalEditProductActive">Active:</label>
             <input type="checkbox" id="modalEditProductActive" />
+            <label for="modalEditProductActive">Is Active</label>
           </div>
 
           <h4 id="bundleRecipeTitle" style="display: none">
