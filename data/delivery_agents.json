@@ -1,1 +1,18 @@
-[]
+[
+    {
+        "id": "agent123-abc-456-def-7890ghij",
+        "name": "Michael Sesay",
+        "phone_number": "+23277112233",
+        "is_available": true,
+        "total_deliveries_completed": 0,
+        "total_earnings": 0.0
+    },
+    {
+        "id": "agent456-def-789-ghi-0123jklm",
+        "name": "Aminata Kamara",
+        "phone_number": "+23278998877",
+        "is_available": true,
+        "total_deliveries_completed": 0,
+        "total_earnings": 0.0
+    }
+]

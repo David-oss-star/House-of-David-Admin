@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from datetime import datetime
 import uuid
 from modules.utils import load_json_data, save_json_data
 
@@ -22,6 +23,16 @@ def _get_all_add_ons():
 
 def _save_all_add_ons(add_ons):
     save_json_data('add_ons.json', add_ons)
+
+def _get_all_orders():
+    return load_json_data('orders.json')
+
+def _get_customer_name(customer_id):
+    """Looks up customer name from customers.json."""
+    customers = load_json_data('customers.json')
+    customer = next((c for c in customers if c['id'] == customer_id), None)
+    return customer['name'] if customer else 'Unknown Customer'
+
 
 # --- API Endpoints: Ingredients ---
 
@@ -55,6 +66,11 @@ def add_ingredient():
         return jsonify({'error': 'Missing required ingredient fields'}), 400
 
     new_ingredient_data['id'] = str(uuid.uuid4())
+    new_ingredient_data['reorder_point'] = new_ingredient_data.get('reorder_point', 0)
+    new_ingredient_data['last_cost_per_unit'] = new_ingredient_data.get('last_cost_per_unit', 0.0)
+    new_ingredient_data['supplier'] = new_ingredient_data.get('supplier', '')
+
+
     ingredients.append(new_ingredient_data)
     _save_all_ingredients(ingredients)
     return jsonify(new_ingredient_data), 201
@@ -103,33 +119,69 @@ def get_bundles():
     bundles = _get_all_bundles()
     return jsonify(bundles)
 
-@inventory_bp.route('/bundles', methods=['POST'])
-def add_bundle():
+@inventory_bp.route('/bundles/<string:bundle_id>', methods=['GET'])
+def get_bundle(bundle_id):
     """
-    Adds a new meal bundle definition.
-    Use Case: Creating new meal options for customers.
+    Retrieves a specific bundle by its ID.
+    Use Case: Viewing detailed bundle information.
+    """
+    bundles = _get_all_bundles()
+    bundle = next((b for b in bundles if b['id'] == bundle_id), None)
+    if bundle:
+        return jsonify(bundle)
+    return jsonify({'error': 'Bundle not found'}), 404
+
+@inventory_bp.route('/bundles/<string:bundle_id>', methods=['PUT'])
+def update_bundle(bundle_id):
+    """
+    Updates an existing bundle's details.
+    Use Case: Changing price, description, activating/deactivating bundle, updating recipe.
     Expected Request Body:
     {
-        "name": "Gravy Bundle",
-        "base_price": 100.00,
-        "description": "All ingredients for delicious gravy.",
-        "is_active": true,
-        "recipe": [ // This would link to ingredient IDs and quantities
-            {"ingredient_id": "uuid_onion", "quantity": 0.5, "unit": "kg"},
-            {"ingredient_id": "uuid_tomato_paste", "quantity": 1, "unit": "can"}
+        "name": "New Gravy Bundle",
+        "base_price": 110.00,
+        "is_active": false,
+        "recipe": [
+            {"ingredient_id": "uuid_onion", "quantity": 0.6, "unit": "kg"}
         ]
     }
     """
-    new_bundle_data = request.json
+    updated_data = request.json
     bundles = _get_all_bundles()
+    
+    for i, bundle in enumerate(bundles):
+        if bundle['id'] == bundle_id:
+            for key, value in updated_data.items():
+                bundle[key] = value
+            bundles[i] = bundle
+            _save_all_bundles(bundles)
+            return jsonify(bundle)
+    return jsonify({'error': 'Bundle not found'}), 404
 
-    if not all(k in new_bundle_data for k in ['name', 'base_price', 'description']):
-        return jsonify({'error': 'Missing required bundle fields'}), 400
+@inventory_bp.route('/bundles/<string:bundle_id>/orders', methods=['GET'])
+def get_bundle_orders(bundle_id):
+    """
+    Retrieves all orders that contain a specific bundle.
+    Use Case: Seeing popularity of a bundle, impact of changing its recipe/price.
+    """
+    all_orders = _get_all_orders()
+    orders_with_bundle = [o for o in all_orders if o.get('bundle_id') == bundle_id]
+    
+    # Enrich orders with customer name for better display
+    enriched_orders = []
+    for order in orders_with_bundle:
+        order_copy = order.copy()
+        order_copy['customer_name'] = _get_customer_name(order['customer_id'])
+        enriched_orders.append(order_copy)
+    
+    # Sort by order received timestamp (newest first)
+    sorted_orders = sorted(
+        enriched_orders, 
+        key=lambda x: datetime.fromisoformat(x['order_received_timestamp']) if x.get('order_received_timestamp') else datetime.min, 
+        reverse=True
+    )
+    return jsonify(sorted_orders)
 
-    new_bundle_data['id'] = str(uuid.uuid4())
-    bundles.append(new_bundle_data)
-    _save_all_bundles(bundles)
-    return jsonify(new_bundle_data), 201
 
 # --- API Endpoints: Add-ons ---
 
@@ -142,27 +194,62 @@ def get_add_ons():
     add_ons = _get_all_add_ons()
     return jsonify(add_ons)
 
-@inventory_bp.route('/add-ons', methods=['POST'])
-def add_add_on():
+@inventory_bp.route('/add-ons/<string:add_on_id>', methods=['GET'])
+def get_add_on(add_on_id):
     """
-    Adds a new add-on definition.
-    Use Case: Introducing new premium add-ons like chicken, crab.
+    Retrieves a specific add-on by its ID.
+    Use Case: Viewing detailed add-on information.
+    """
+    add_ons = _get_all_add_ons()
+    add_on = next((ao for ao in add_ons if ao['id'] == add_on_id), None)
+    if add_on:
+        return jsonify(add_on)
+    return jsonify({'error': 'Add-on not found'}), 404
+
+@inventory_bp.route('/add-ons/<string:add_on_id>', methods=['PUT'])
+def update_add_on(add_on_id):
+    """
+    Updates an existing add-on's details.
+    Use Case: Changing price, activating/deactivating add-on.
     Expected Request Body:
     {
-        "name": "Chicken (whole)",
-        "price": 50.00,
-        "unit": "piece",
-        "is_active": true
+        "price": 60.00,
+        "is_active": false
     }
     """
-    new_add_on_data = request.json
+    updated_data = request.json
     add_ons = _get_all_add_ons()
+    
+    for i, add_on in enumerate(add_ons):
+        if add_on['id'] == add_on_id:
+            for key, value in updated_data.items():
+                add_on[key] = value
+            add_ons[i] = add_on
+            _save_all_add_ons(add_ons)
+            return jsonify(add_on)
+    return jsonify({'error': 'Add-on not found'}), 404
 
-    if not all(k in new_add_on_data for k in ['name', 'price', 'unit']):
-        return jsonify({'error': 'Missing required add-on fields'}), 400
-
-    new_add_on_data['id'] = str(uuid.uuid4())
-    add_ons.append(new_add_on_data)
-    _save_all_add_ons(add_ons)
-    return jsonify(new_add_on_data), 201
+@inventory_bp.route('/add-ons/<string:add_on_id>/orders', methods=['GET'])
+def get_addon_orders(add_on_id):
+    """
+    Retrieves all orders that contain a specific add-on.
+    Use Case: Seeing popularity of an add-on, impact of changing its price.
+    """
+    all_orders = _get_all_orders()
+    orders_with_addon = [o for o in all_orders if add_on_id in o.get('add_ons', [])]
+    
+    # Enrich orders with customer name for better display
+    enriched_orders = []
+    for order in orders_with_addon:
+        order_copy = order.copy()
+        order_copy['customer_name'] = _get_customer_name(order['customer_id'])
+        enriched_orders.append(order_copy)
+    
+    # Sort by order received timestamp (newest first)
+    sorted_orders = sorted(
+        enriched_orders, 
+        key=lambda x: datetime.fromisoformat(x['order_received_timestamp']) if x.get('order_received_timestamp') else datetime.min, 
+        reverse=True
+    )
+    return jsonify(sorted_orders)
 

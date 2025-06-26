@@ -136,6 +136,17 @@ section h2 {
     font-size: 1.8em;
 }
 
+/* Sub-headings for Inventory tables */
+section#inventory-section h3 {
+    color: #444;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+    font-size: 1.4em;
+}
+
+
 /* Form Styling */
 .form-group {
     margin-bottom: 15px;
@@ -319,7 +330,10 @@ textarea {
 #ordersTable,
 #ingredientsTable,
 #customersTable,
-#modalCustomerOrdersTable {
+#bundlesTable,
+#addOnsTable,
+#modalCustomerOrdersTable,
+#modalProductOrdersTable {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
@@ -330,7 +344,10 @@ textarea {
 #ordersTable thead th,
 #ingredientsTable thead th,
 #customersTable thead th,
-#modalCustomerOrdersTable thead th {
+#bundlesTable thead th,
+#addOnsTable thead th,
+#modalCustomerOrdersTable thead th,
+#modalProductOrdersTable thead th {
     background-color: #007bff;
     color: white;
     padding: 12px 15px;
@@ -344,28 +361,40 @@ textarea {
 #ordersTable tbody tr,
 #ingredientsTable tbody tr,
 #customersTable tbody tr,
-#modalCustomerOrdersTable tbody tr {
+#bundlesTable tbody tr,
+#addOnsTable tbody tr,
+#modalCustomerOrdersTable tbody tr,
+#modalProductOrdersTable tbody tr {
     border-bottom: 1px solid #eee;
 }
 
 #ordersTable tbody tr:nth-child(even),
 #ingredientsTable tbody tr:nth-child(even),
 #customersTable tbody tr:nth-child(even),
-#modalCustomerOrdersTable tbody tr:nth-child(even) {
+#bundlesTable tbody tr:nth-child(even),
+#addOnsTable tbody tr:nth-child(even),
+#modalCustomerOrdersTable tbody tr:nth-child(even),
+#modalProductOrdersTable tbody tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
 #ordersTable tbody tr:hover,
 #ingredientsTable tbody tr:hover,
 #customersTable tbody tr:hover,
-#modalCustomerOrdersTable tbody tr:hover {
+#bundlesTable tbody tr:hover,
+#addOnsTable tbody tr:hover,
+#modalCustomerOrdersTable tbody tr:hover,
+#modalProductOrdersTable tbody tr:hover {
     background-color: #eaf6ff;
 }
 
 #ordersTable tbody td,
 #ingredientsTable tbody td,
 #customersTable tbody td,
-#modalCustomerOrdersTable tbody td {
+#bundlesTable tbody td,
+#addOnsTable tbody td,
+#modalCustomerOrdersTable tbody td,
+#modalProductOrdersTable tbody td {
     padding: 10px 15px;
     vertical-align: top;
     /* Align content to the top */
@@ -593,13 +622,15 @@ td select {
     padding-bottom: 10px;
 }
 
-.modal-content h3.customer-order-history-title {
+/* Modal sub-headings */
+.modal-content h3 {
     margin-top: 30px;
     margin-bottom: 15px;
     color: #333;
     border-bottom: 1px solid #ddd;
     padding-bottom: 8px;
 }
+
 
 .modal .close-button {
     color: #aaa;
@@ -620,13 +651,15 @@ td select {
     text-decoration: none;
 }
 
-/* Customer Info Display in Modal */
-.customer-info-display p {
+/* Info Display in Modal (common styles) */
+.customer-info-display p,
+.product-info-display p {
     margin-bottom: 8px;
     font-size: 1em;
 }
 
-.customer-info-display p strong {
+.customer-info-display p strong,
+.product-info-display p strong {
     color: #555;
     display: inline-block;
     /* For consistent alignment */
@@ -634,8 +667,9 @@ td select {
     /* Fixed width for labels */
 }
 
-/* Customer Editable Fields in Modal */
-.customer-editable-fields {
+/* Editable Fields in Modal (common styles) */
+.customer-editable-fields,
+.product-editable-fields {
     background-color: #e9ecef;
     padding: 20px;
     border-radius: 8px;
@@ -643,7 +677,8 @@ td select {
     border: 1px solid #ddd;
 }
 
-.customer-editable-fields h3 {
+.customer-editable-fields h3,
+.product-editable-fields h3 {
     margin-top: 0;
     margin-bottom: 15px;
     color: #0056b3;
@@ -652,18 +687,45 @@ td select {
     padding-bottom: 8px;
 }
 
-.customer-editable-fields .form-group {
+.customer-editable-fields .form-group,
+.product-editable-fields .form-group {
     margin-bottom: 10px;
 }
 
-.customer-editable-fields label {
+.customer-editable-fields label,
+.product-editable-fields label {
     font-weight: normal;
     /* Override general bold */
 }
 
 .customer-editable-fields input[type="text"],
-.customer-editable-fields textarea {
+.customer-editable-fields textarea,
+.product-editable-fields input[type="text"],
+.product-editable-fields input[type="number"],
+.product-editable-fields textarea {
     background-color: #fff;
+}
+
+/* Special styling for checkbox in editable fields */
+.product-editable-fields input[type="checkbox"] {
+    width: auto;
+    margin-left: 5px;
+    /* Space from label */
+    vertical-align: middle;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+
+/* Bundle Recipe Display */
+.bundle-recipe-display ul {
+    list-style-type: disc;
+    margin-left: 20px;
+    padding: 0;
+}
+
+.bundle-recipe-display li {
+    margin-bottom: 5px;
 }
 
 
@@ -684,6 +746,10 @@ td select {
 
     section h2 {
         font-size: 1.5em;
+    }
+
+    section#inventory-section h3 {
+        font-size: 1.3em;
     }
 
     .form-group input,
@@ -717,8 +783,14 @@ td select {
     #ingredientsTable tbody td,
     #customersTable thead th,
     #customersTable tbody td,
+    #bundlesTable thead th,
+    #bundlesTable tbody td,
+    #addOnsTable thead th,
+    #addOnsTable tbody td,
     #modalCustomerOrdersTable thead th,
-    #modalCustomerOrdersTable tbody td {
+    #modalCustomerOrdersTable tbody td,
+    #modalProductOrdersTable thead th,
+    #modalProductOrdersTable tbody td {
         font-size: 0.85em;
         padding: 8px 10px;
     }
@@ -759,7 +831,8 @@ td select {
         /* Adjust for very small screens */
     }
 
-    .customer-info-display p strong {
+    .customer-info-display p strong,
+    .product-info-display p strong {
         width: 90px;
         /* Smaller fixed width for labels in modal on small screens */
     }
@@ -793,7 +866,9 @@ td select {
     #customersTable th:first-child,
     #customersTable td:first-child,
     #modalCustomerOrdersTable th:first-child,
-    #modalCustomerOrdersTable tbody td:first-child {
+    #modalCustomerOrdersTable tbody td:first-child,
+    #modalProductOrdersTable th:first-child,
+    #modalProductOrdersTable tbody td:first-child {
         display: none;
     }
 }

@@ -22,7 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const customerSearchInput = document.getElementById('customerSearchInput');
     const noCustomersMessage = document.getElementById('noCustomersMessage');
 
+    // New inventory tables
     const ingredientsTableBody = document.querySelector('#ingredientsTable tbody');
+    const bundlesTableBody = document.querySelector('#bundlesTable tbody');
+    const addOnsTableBody = document.querySelector('#addOnsTable tbody');
 
     const generateDailySummaryBtn = document.getElementById('generateDailySummary');
     const dailySummaryOutput = document.getElementById('dailySummaryOutput');
@@ -35,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalOrdersAllTimeElement = document.getElementById('totalOrdersAllTime');
     const totalCustomersElement = document.getElementById('totalCustomers');
 
-    // Modal elements
+    // Customer Details Modal elements
     const customerDetailsModal = document.getElementById('customerDetailsModal');
     const modalCloseButton = customerDetailsModal.querySelector('.close-button');
     const modalCustomerName = document.getElementById('modalCustomerName');
@@ -50,9 +53,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCustomerOrdersTableBody = document.querySelector('#modalCustomerOrdersTable tbody');
     const noCustomerOrdersMessage = document.getElementById('noCustomerOrdersMessage');
 
-    // Store the ID of the customer currently open in the modal
-    let currentModalCustomerId = null;
+    // Product Details Modal elements (new)
+    const productDetailsModal = document.getElementById('productDetailsModal');
+    const productModalCloseButton = document.getElementById('productModalCloseButton');
+    const productModalTitle = document.getElementById('productModalTitle');
+    const modalProductName = document.getElementById('modalProductName');
+    const modalProductId = document.getElementById('modalProductId');
+    const productBasePriceP = document.getElementById('productBasePriceP'); // For bundles
+    const modalProductBasePrice = document.getElementById('modalProductBasePrice');
+    const productPriceP = document.getElementById('productPriceP'); // For add-ons
+    const modalProductPrice = document.getElementById('modalProductPrice');
+    const productUnitP = document.getElementById('productUnitP'); // For add-ons
+    const modalProductUnit = document.getElementById('modalProductUnit');
+    const productDescriptionP = document.getElementById('productDescriptionP'); // For bundles
+    const modalProductDescription = document.getElementById('modalProductDescription');
+    const modalProductActive = document.getElementById('modalProductActive');
 
+    const modalEditProductName = document.getElementById('modalEditProductName');
+    const editProductBasePriceGroup = document.getElementById('editProductBasePriceGroup');
+    const modalEditProductBasePrice = document.getElementById('modalEditProductBasePrice');
+    const editProductPriceGroup = document.getElementById('editProductPriceGroup');
+    const modalEditProductPrice = document.getElementById('modalEditProductPrice');
+    const editProductUnitGroup = document.getElementById('editProductUnitGroup');
+    const modalEditProductUnit = document.getElementById('modalEditProductUnit');
+    const editProductDescriptionGroup = document.getElementById('editProductDescriptionGroup');
+    const modalEditProductDescription = document.getElementById('modalEditProductDescription');
+    const modalEditProductActive = document.getElementById('modalEditProductActive');
+    const saveProductDetailsBtn = document.getElementById('saveProductDetailsBtn');
+    const modalProductOrdersTableBody = document.querySelector('#modalProductOrdersTable tbody');
+    const noProductOrdersMessage = document.getElementById('noProductOrdersMessage');
+    const bundleRecipeTitle = document.getElementById('bundleRecipeTitle');
+    const modalProductRecipe = document.getElementById('modalProductRecipe');
+
+    let currentModalCustomerId = null; // Store the ID of the customer currently open in the customer modal
+    let currentModalProductId = null; // Store the ID of the product currently open in the product modal
+    let currentModalProductType = null; // 'bundle' or 'addon'
 
     // Navigation elements
     const navLinks = document.querySelectorAll('.nav-link');
@@ -90,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 customerIdSelect.appendChild(option);
             });
 
-            // Fetch Bundles
+            // Fetch Bundles (re-fetch to ensure latest data for forms)
             const bundleResponse = await fetch('/api/inventory/bundles');
             allBundles = await bundleResponse.json();
             bundleIdSelect.innerHTML = '<option value="">Select Bundle</option>';
@@ -104,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bundleIdSelect.addEventListener('change', calculateTotalPrice);
 
 
-            // Fetch Add-ons and create checkboxes
+            // Fetch Add-ons and create checkboxes (re-fetch to ensure latest data for forms)
             const addOnResponse = await fetch('/api/inventory/add-ons');
             allAddOns = await addOnResponse.json();
             addOnsContainer.innerHTML = '';
@@ -557,10 +592,6 @@ document.addEventListener('DOMContentLoaded', () => {
             button.removeEventListener('click', openCustomerDetailsModal);
             button.addEventListener('click', openCustomerDetailsModal);
         });
-        // You might add delete functionality for customers later
-        // document.querySelectorAll('.delete-customer-btn').forEach(button => {
-        //     button.addEventListener('click', handleDeleteCustomer);
-        // });
     }
 
     // Filtering logic for Customers
@@ -594,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const customerOrders = await ordersResponse.json();
 
             populateCustomerDetailsModal(customer, customerOrders);
-            customerDetailsModal.classList.remove('hidden'); // Show the modal
+            customerDetailsModal.classList.remove('hidden');
         } catch (error) {
             console.error('Error opening customer details:', error);
             showMessage(`Failed to load customer details: ${error.message}`, 'error');
@@ -602,8 +633,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeCustomerDetailsModal() {
-        customerDetailsModal.classList.add('hidden'); // Hide the modal
-        currentModalCustomerId = null; // Clear the current customer ID
+        customerDetailsModal.classList.add('hidden');
+        currentModalCustomerId = null;
     }
 
     function populateCustomerDetailsModal(customer, orders) {
@@ -614,7 +645,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modalCustomerTotalOrders.textContent = customer.total_orders_count || 0;
         modalCustomerLastOrder.textContent = customer.last_order_date || 'N/A';
 
-        // Set values for editable fields
         modalCustomerDiscounts.value = customer.discounts || '';
         modalCustomerSpecialMessage.value = customer.special_message || '';
 
@@ -669,7 +699,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showMessage('Customer details updated successfully!', 'success');
-            // Re-fetch customers to update the main list (if any changes were visible there)
             fetchAndRenderCustomers(); 
             closeCustomerDetailsModal();
         } catch (error) {
@@ -680,7 +709,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Attach modal event listeners
     modalCloseButton.addEventListener('click', closeCustomerDetailsModal);
-    // This listener makes the modal close when clicking outside of it
     window.addEventListener('click', (event) => {
         if (event.target === customerDetailsModal) {
             closeCustomerDetailsModal();
@@ -690,17 +718,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Inventory Display ---
-    async function fetchAndRenderIngredients() {
+    async function fetchAndRenderInventory() {
         try {
-            const response = await fetch('/api/inventory/ingredients');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            allIngredients = await response.json();
+            const ingredientsResponse = await fetch('/api/inventory/ingredients');
+            if (!ingredientsResponse.ok) throw new Error('Failed to load ingredients.');
+            allIngredients = await ingredientsResponse.json();
             renderIngredients(allIngredients);
+
+            const bundlesResponse = await fetch('/api/inventory/bundles');
+            if (!bundlesResponse.ok) throw new Error('Failed to load bundles.');
+            allBundles = await bundlesResponse.json(); // Update global allBundles
+            renderBundles(allBundles);
+
+            const addOnsResponse = await fetch('/api/inventory/add-ons');
+            if (!addOnsResponse.ok) throw new Error('Failed to load add-ons.');
+            allAddOns = await addOnsResponse.json(); // Update global allAddOns
+            renderAddOns(allAddOns);
+
         } catch (error) {
-            console.error('Error fetching ingredients:', error);
+            console.error('Error fetching inventory:', error);
+            showMessage(`Failed to load inventory data: ${error.message}`, 'error');
+            // Clear tables on error
             ingredientsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load ingredients.</td></tr>';
+            bundlesTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load bundles.</td></tr>';
+            addOnsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Failed to load add-ons.</td></tr>';
         }
     }
 
@@ -725,6 +766,237 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         });
     }
+
+    function renderBundles(bundlesToRender) {
+        bundlesTableBody.innerHTML = '';
+        if (bundlesToRender.length === 0) {
+            bundlesTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No bundles found.</td></tr>';
+            return;
+        }
+
+        bundlesToRender.forEach(bundle => {
+            const row = bundlesTableBody.insertRow();
+            const activeStatus = bundle.is_active ? 'Yes' : 'No';
+            const activeClass = bundle.is_active ? 'status-sufficient-stock' : 'status-low-stock';
+
+            row.innerHTML = `
+                <td>${bundle.name}</td>
+                <td>Le ${parseFloat(bundle.base_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td>${bundle.description || 'N/A'}</td>
+                <td><span class="${activeClass}">${activeStatus}</span></td>
+                <td>
+                    <button class="btn primary small-btn view-product-details-btn" data-product-id="${bundle.id}" data-product-type="bundle">View Details</button>
+                </td>
+            `;
+        });
+        document.querySelectorAll('.view-product-details-btn[data-product-type="bundle"]').forEach(button => {
+            button.removeEventListener('click', openProductDetailsModal);
+            button.addEventListener('click', openProductDetailsModal);
+        });
+    }
+
+    function renderAddOns(addOnsToRender) {
+        addOnsTableBody.innerHTML = '';
+        if (addOnsToRender.length === 0) {
+            addOnsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No add-ons found.</td></tr>';
+            return;
+        }
+
+        addOnsToRender.forEach(addOn => {
+            const row = addOnsTableBody.insertRow();
+            const activeStatus = addOn.is_active ? 'Yes' : 'No';
+            const activeClass = addOn.is_active ? 'status-sufficient-stock' : 'status-low-stock';
+
+            row.innerHTML = `
+                <td>${addOn.name}</td>
+                <td>Le ${parseFloat(addOn.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td>${addOn.unit || 'N/A'}</td>
+                <td><span class="${activeClass}">${activeStatus}</span></td>
+                <td>
+                    <button class="btn primary small-btn view-product-details-btn" data-product-id="${addOn.id}" data-product-type="addon">View Details</button>
+                </td>
+            `;
+        });
+        document.querySelectorAll('.view-product-details-btn[data-product-type="addon"]').forEach(button => {
+            button.removeEventListener('click', openProductDetailsModal);
+            button.addEventListener('click', openProductDetailsModal);
+        });
+    }
+
+
+    // --- Product Details Modal Logic ---
+    async function openProductDetailsModal(event) {
+        currentModalProductId = event.target.dataset.productId;
+        currentModalProductType = event.target.dataset.productType; // 'bundle' or 'addon'
+        if (!currentModalProductId || !currentModalProductType) return;
+
+        // Determine the correct path segment ('bundles' or 'add-ons')
+        const pathSegment = currentModalProductType === 'addon' ? 'add-ons' : currentModalProductType + 's';
+
+        try {
+            const productResponse = await fetch(`/api/inventory/${pathSegment}/${currentModalProductId}`);
+            if (!productResponse.ok) throw new Error(`${currentModalProductType} not found`);
+            const product = await productResponse.json();
+
+            const ordersResponse = await fetch(`/api/inventory/${pathSegment}/${currentModalProductId}/orders`);
+            if (!ordersResponse.ok) throw new Error(`${currentModalProductType} orders not found`);
+            const productOrders = await ordersResponse.json();
+
+            populateProductDetailsModal(product, productOrders, currentModalProductType);
+            productDetailsModal.classList.remove('hidden'); // Show the modal
+        } catch (error) {
+            console.error(`Error opening ${currentModalProductType} details:`, error);
+            showMessage(`Failed to load ${currentModalProductType} details: ${error.message}`, 'error');
+        }
+    }
+
+    function closeProductDetailsModal() {
+        productDetailsModal.classList.add('hidden');
+        currentModalProductId = null;
+        currentModalProductType = null;
+    }
+
+    function populateProductDetailsModal(product, orders, type) {
+        productModalTitle.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} Details`;
+        modalProductName.textContent = product.name;
+        modalProductId.textContent = product.id.substring(0, 8) + '...';
+
+        // Hide/show fields based on type
+        productBasePriceP.style.display = 'none';
+        productPriceP.style.display = 'none';
+        productUnitP.style.display = 'none';
+        productDescriptionP.style.display = 'none';
+        bundleRecipeTitle.style.display = 'none';
+        modalProductRecipe.style.display = 'none';
+
+        editProductBasePriceGroup.style.display = 'none';
+        editProductPriceGroup.style.display = 'none';
+        editProductUnitGroup.style.display = 'none';
+        editProductDescriptionGroup.style.display = 'none';
+
+        modalEditProductName.value = product.name;
+        modalEditProductActive.checked = product.is_active || false; // Default to false if undefined
+
+        if (type === 'bundle') {
+            productBasePriceP.style.display = 'block';
+            modalProductBasePrice.textContent = `Le ${parseFloat(product.base_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            productDescriptionP.style.display = 'block';
+            modalProductDescription.textContent = product.description || 'N/A';
+            
+            editProductBasePriceGroup.style.display = 'block';
+            modalEditProductBasePrice.value = product.base_price;
+            editProductDescriptionGroup.style.display = 'block';
+            modalEditProductDescription.value = product.description || '';
+
+            // Display recipe
+            bundleRecipeTitle.style.display = 'block';
+            modalProductRecipe.style.display = 'block';
+            modalProductRecipe.innerHTML = ''; // Clear previous recipe
+            if (product.recipe && product.recipe.length > 0) {
+                const ul = document.createElement('ul');
+                product.recipe.forEach(item => {
+                    // Need to look up ingredient name using its ID
+                    const ingredient = allIngredients.find(ing => ing.id === item.ingredient_id);
+                    const ingredientName = ingredient ? ingredient.name : 'Unknown Ingredient';
+                    const li = document.createElement('li');
+                    li.textContent = `${ingredientName}: ${item.quantity} ${item.unit}`;
+                    ul.appendChild(li);
+                });
+                modalProductRecipe.appendChild(ul);
+            } else {
+                modalProductRecipe.innerHTML = '<p>No recipe defined.</p>';
+            }
+
+        } else if (type === 'addon') {
+            productPriceP.style.display = 'block';
+            modalProductPrice.textContent = `Le ${parseFloat(product.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            productUnitP.style.display = 'block';
+            modalProductUnit.textContent = product.unit || 'N/A';
+
+            editProductPriceGroup.style.display = 'block';
+            modalEditProductPrice.value = product.price;
+            editProductUnitGroup.style.display = 'block';
+            modalEditProductUnit.value = product.unit || '';
+        }
+
+        renderProductOrdersHistory(orders, type);
+    }
+
+    function renderProductOrdersHistory(orders, type) {
+        modalProductOrdersTableBody.innerHTML = '';
+        if (orders.length === 0) {
+            noProductOrdersMessage.style.display = 'block';
+            modalProductOrdersTableBody.style.display = 'none';
+            return;
+        } else {
+            noProductOrdersMessage.style.display = 'none';
+            modalProductOrdersTableBody.style.display = 'table-row-group';
+        }
+
+        orders.forEach(order => {
+            const row = modalProductOrdersTableBody.insertRow();
+            const orderTime = order.order_received_timestamp ? new Date(order.order_received_timestamp).toLocaleString() : 'N/A';
+
+            row.innerHTML = `
+                <td>${order.id.substring(0, 8)}...</td>
+                <td>${orderTime}</td>
+                <td>${order.customer_name}</td>
+                <td>Le ${parseFloat(order.total_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td><span class="status-badge status-${order.order_status.replace(/\s/g, '_')}">${order.order_status}</span></td>
+            `;
+        });
+    }
+
+    async function saveProductDetails() {
+        if (!currentModalProductId || !currentModalProductType) return;
+
+        const updatedData = {
+            name: modalEditProductName.value.trim(),
+            is_active: modalEditProductActive.checked
+        };
+
+        if (currentModalProductType === 'bundle') {
+            updatedData.base_price = parseFloat(modalEditProductBasePrice.value);
+            updatedData.description = modalEditProductDescription.value.trim();
+        } else if (currentModalProductType === 'addon') {
+            updatedData.price = parseFloat(modalEditProductPrice.value);
+            updatedData.unit = modalEditProductUnit.value.trim();
+        }
+
+        // Determine the correct path segment ('bundles' or 'add-ons')
+        const pathSegment = currentModalProductType === 'addon' ? 'add-ons' : currentModalProductType + 's';
+
+        try {
+            const response = await fetch(`/api/inventory/${pathSegment}/${currentModalProductId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+
+            showMessage(`${currentModalProductType.charAt(0).toUpperCase() + currentModalProductType.slice(1)} details updated successfully!`, 'success');
+            fetchAndRenderInventory(); // Re-render inventory tables to show updates
+            closeProductDetailsModal();
+            populateFormDropdowns(); // Re-populate order form dropdowns in case prices/names changed
+        } catch (error) {
+            console.error(`Error saving ${currentModalProductType} details:`, error);
+            showMessage(`Failed to save ${currentModalProductType} details: ${error.message}`, 'error');
+        }
+    }
+
+    // Attach product modal event listeners
+    productModalCloseButton.addEventListener('click', closeProductDetailsModal);
+    window.addEventListener('click', (event) => {
+        if (event.target === productDetailsModal) {
+            closeProductDetailsModal();
+        }
+    });
+    saveProductDetailsBtn.addEventListener('click', saveProductDetails);
+
 
     // --- Reporting ---
     async function generateReport(endpoint, outputElementId) {
@@ -820,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (targetId === 'customers-list-section') {
                 fetchAndRenderCustomers();
             } else if (targetId === 'inventory-section') {
-                fetchAndRenderIngredients();
+                fetchAndRenderInventory(); // Call new general inventory fetch
             } else if (targetId === 'add-order-section') {
                 populateFormDropdowns();
                 calculateTotalPrice();

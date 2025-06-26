@@ -133,3 +133,21 @@ def agent_performance():
 
     return jsonify(sorted(results, key=lambda x: x['total_deliveries'], reverse=True))
 
+
+@reporting_bp.route('/grand-total-sales', methods=['GET'])
+def grand_total_sales():
+    """
+    Calculates the grand total sales (revenue) from all delivered or paid orders across all time.
+    Use Case: High-level business performance metric for the dashboard.
+    """
+    orders = _get_all_orders()
+    total_sales = sum(o.get('total_price', 0) for o in orders if o['order_status'] == 'Delivered' or o['payment_status'] == 'Paid')
+    total_orders_count = len(orders)
+    customers = _get_all_customers()
+    total_customers_count = len(customers)
+
+    return jsonify({
+        'grand_total_sales': total_sales,
+        'total_orders_all_time': total_orders_count,
+        'total_customers_registered': total_customers_count
+    })

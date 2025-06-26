@@ -1,1 +1,74 @@
-[]
+[
+    {
+        "id": "ing1a2b3c4d5-e6f7-8901-2345-67890abcde",
+        "name": "Onions",
+        "unit": "kg",
+        "current_stock": 25.0,
+        "reorder_point": 5.0,
+        "last_cost_per_unit": 200.0,
+        "supplier": "Central Market"
+    },
+    {
+        "id": "ing2e3f4g5h6-i7j8-9012-3456-7890abcdef",
+        "name": "Tomatoes",
+        "unit": "kg",
+        "current_stock": 15.0,
+        "reorder_point": 3.0,
+        "last_cost_per_unit": 150.0,
+        "supplier": "Krootown Road Market"
+    },
+    {
+        "id": "ing3i4j5k6l7-m8n9-0123-4567-890abcdef0",
+        "name": "Garlic",
+        "unit": "kg",
+        "current_stock": 5.0,
+        "reorder_point": 1.0,
+        "last_cost_per_unit": 300.0,
+        "supplier": "Central Market"
+    },
+    {
+        "id": "ing4m5n6o7p8-q9r0-1234-5678-90abcdef12",
+        "name": "Groundnuts (shelled)",
+        "unit": "kg",
+        "current_stock": 30.0,
+        "reorder_point": 10.0,
+        "last_cost_per_unit": 400.0,
+        "supplier": "Freetown Trader"
+    },
+    {
+        "id": "ing5q6r7s8t9-u0v1-2345-6789-0abcdef34",
+        "name": "Palm Oil",
+        "unit": "liter",
+        "current_stock": 10.0,
+        "reorder_point": 2.0,
+        "last_cost_per_unit": 250.0,
+        "supplier": "Local Distributor"
+    },
+    {
+        "id": "ing6u7v8w9x0-y1z2-3456-7890-abcdef56",
+        "name": "Rice (Long Grain)",
+        "unit": "kg",
+        "current_stock": 100.0,
+        "reorder_point": 20.0,
+        "last_cost_per_unit": 50.0,
+        "supplier": "Wholesale Depot"
+    },
+    {
+        "id": "ing7a8b9c0d1-e2f3-4567-8901-23456789ab",
+        "name": "Maggi Cubes",
+        "unit": "pack",
+        "current_stock": 20.0,
+        "reorder_point": 5.0,
+        "last_cost_per_unit": 30.0,
+        "supplier": "Local Shop"
+    },
+    {
+        "id": "ing8e9f0g1h2-i3j4-5678-9012-34567890cd",
+        "name": "Fresh Fish (Bonga)",
+        "unit": "kg",
+        "current_stock": 8.0,
+        "reorder_point": 2.0,
+        "last_cost_per_unit": 180.0,
+        "supplier": "Fish Market"
+    }
+]

@@ -201,6 +201,8 @@
 
       <section id="inventory-section" class="content-section hidden">
         <h2>Inventory Status</h2>
+
+        <h3>Raw Ingredients</h3>
         <div class="table-container">
           <table id="ingredientsTable">
             <thead>
@@ -214,6 +216,42 @@
             </thead>
             <tbody>
               <!-- Ingredients will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Meal Bundles (Products)</h3>
+        <div class="table-container">
+          <table id="bundlesTable">
+            <thead>
+              <tr>
+                <th>Bundle Name</th>
+                <th>Base Price (Le)</th>
+                <th>Description</th>
+                <th>Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Bundles will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Add-ons</h3>
+        <div class="table-container">
+          <table id="addOnsTable">
+            <thead>
+              <tr>
+                <th>Add-on Name</th>
+                <th>Price (Le)</th>
+                <th>Unit</th>
+                <th>Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Add-ons will be dynamically inserted here -->
             </tbody>
           </table>
         </div>
@@ -319,6 +357,102 @@
           style="display: none; text-align: center; color: #777"
         >
           No orders found for this customer.
+        </p>
+      </div>
+    </div>
+
+    <!-- Product Details Modal (for Bundles and Add-ons) -->
+    <div id="productDetailsModal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close-button" id="productModalCloseButton">&times;</span>
+        <h2 id="productModalTitle">Product Details</h2>
+        <div class="product-info-display">
+          <p><strong>Name:</strong> <span id="modalProductName"></span></p>
+          <p><strong>ID:</strong> <span id="modalProductId"></span></p>
+          <p id="productBasePriceP">
+            <strong>Base Price:</strong>
+            <span id="modalProductBasePrice"></span>
+          </p>
+          <p id="productPriceP">
+            <strong>Price:</strong> <span id="modalProductPrice"></span>
+          </p>
+          <p id="productUnitP">
+            <strong>Unit:</strong> <span id="modalProductUnit"></span>
+          </p>
+          <p id="productDescriptionP">
+            <strong>Description:</strong>
+            <span id="modalProductDescription"></span>
+          </p>
+          <p><strong>Active:</strong> <span id="modalProductActive"></span></p>
+        </div>
+
+        <div class="product-editable-fields">
+          <h3>Editable Information</h3>
+          <div class="form-group">
+            <label for="modalEditProductName">Name:</label>
+            <input type="text" id="modalEditProductName" />
+          </div>
+          <div class="form-group" id="editProductBasePriceGroup">
+            <label for="modalEditProductBasePrice">Base Price (Le):</label>
+            <input type="number" id="modalEditProductBasePrice" step="0.01" />
+          </div>
+          <div class="form-group" id="editProductPriceGroup">
+            <label for="modalEditProductPrice">Price (Le):</label>
+            <input type="number" id="modalEditProductPrice" step="0.01" />
+          </div>
+          <div class="form-group" id="editProductUnitGroup">
+            <label for="modalEditProductUnit">Unit:</label>
+            <input type="text" id="modalEditProductUnit" />
+          </div>
+          <div class="form-group" id="editProductDescriptionGroup">
+            <label for="modalEditProductDescription">Description:</label>
+            <textarea id="modalEditProductDescription" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="modalEditProductActive">Active:</label>
+            <input type="checkbox" id="modalEditProductActive" />
+          </div>
+
+          <h4 id="bundleRecipeTitle" style="display: none">
+            Bundle Recipe (Ingredients & Quantities)
+          </h4>
+          <div
+            id="modalProductRecipe"
+            class="bundle-recipe-display"
+            style="display: none"
+          >
+            <!-- Recipe details will be inserted here -->
+          </div>
+
+          <button class="btn primary" id="saveProductDetailsBtn">
+            Save Changes
+          </button>
+        </div>
+
+        <h3 class="product-order-history-title">
+          Orders Containing This Product
+        </h3>
+        <div class="table-container product-order-history-table">
+          <table id="modalProductOrdersTable">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Customer Name</th>
+                <th>Total Price (Le)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Product specific orders will be dynamically inserted here -->
+            </tbody>
+          </table>
+        </div>
+        <p
+          id="noProductOrdersMessage"
+          style="display: none; text-align: center; color: #777"
+        >
+          No orders found for this product.
         </p>
       </div>
     </div>

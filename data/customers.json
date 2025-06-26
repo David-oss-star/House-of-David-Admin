@@ -1,1 +1,37 @@
-[]
+[
+    {
+        "id": "c1f7a0b8-c3d4-4e5f-b6a7-890123456789",
+        "name": "Fatmata Conteh",
+        "whatsapp_number": "+23276123456",
+        "delivery_address": "25 Regent Road, Lumley, Freetown",
+        "email": "fatmataconteh@example.com",
+        "total_orders_count": 0,
+        "last_order_date": ""
+    },
+    {
+        "id": "e2d9c1f7-b8a3-4c5d-9e0f-123456789012",
+        "name": "Mohamed Koroma",
+        "whatsapp_number": "+23277987654",
+        "delivery_address": "10 Wilberforce Loop, Freetown",
+        "email": "mohamed.k@example.com",
+        "total_orders_count": 0,
+        "last_order_date": ""
+    },
+    {
+        "id": "a3c8b6d4-f7e5-4a1b-8c2d-345678901234",
+        "name": "Isata Bangura",
+        "whatsapp_number": "+23278555111",
+        "delivery_address": "5 Murray Town Road, Freetown",
+        "email": "",
+        "total_orders_count": 0,
+        "last_order_date": ""
+    },
+    {
+        "name": "David Williams",
+        "whatsapp_number": "+232 99 933 264",
+        "delivery_address": "Lumley Regent Rd Freetown",
+        "id": "cfc3c167-0df8-4dea-9c50-4e7c306dbe12",
+        "total_orders_count": 0,
+        "last_order_date": ""
+    }
+]

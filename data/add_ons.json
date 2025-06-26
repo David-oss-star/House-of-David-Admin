@@ -1,1 +1,30 @@
-[]
+[
+    {
+        "id": "ao1a2b3c-4d5e-6f70-8192-3a4b5c6d7e8f",
+        "name": "Fresh Chicken (Pieces)",
+        "price": 50.00,
+        "unit": "piece",
+        "is_active": true
+    },
+    {
+        "id": "ao9f0e1d-2c3b-4a59-6b7c-8d9e0f1a2b3c",
+        "name": "Beef (Cubed)",
+        "price": 75.00,
+        "unit": "kg",
+        "is_active": true
+    },
+    {
+        "id": "ao3c2d1e-0f9a-8b7c-6d5e-4f3a2b1c0d9e",
+        "name": "Fresh Crab",
+        "price": 30.00,
+        "unit": "piece",
+        "is_active": true
+    },
+    {
+        "id": "ao8e7d6c-5b4a-3928-1029-384756c2d1e0",
+        "name": "Extra Pepper (scotch bonnet)",
+        "price": 5.00,
+        "unit": "bag",
+        "is_active": true
+    }
+]

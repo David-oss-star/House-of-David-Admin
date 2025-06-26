@@ -1,1 +1,37 @@
-[]
+[
+    {
+        "id": "b1a2c3d4-e5f6-7890-1234-567890abcdef",
+        "name": "Gravy Sauce Bundle",
+        "base_price": 100.00,
+        "description": "All essential ingredients for a rich gravy sauce.",
+        "is_active": true,
+        "recipe": [
+            {"ingredient_id": "ing1a2b3c4d5", "quantity": 0.5, "unit": "kg"},
+            {"ingredient_id": "ing2e3f4g5h6", "quantity": 0.2, "unit": "kg"},
+            {"ingredient_id": "ing3i4j5k6l7", "quantity": 0.1, "unit": "kg"}
+        ]
+    },
+    {
+        "id": "f0e9d8c7-b6a5-4321-fedc-ba9876543210",
+        "name": "Groundnut Soup Bundle",
+        "base_price": 120.00,
+        "description": "Complete ingredients for a traditional groundnut soup.",
+        "is_active": true,
+        "recipe": [
+            {"ingredient_id": "ing4m5n6o7p8", "quantity": 0.75, "unit": "kg"},
+            {"ingredient_id": "ing1a2b3c4d5", "quantity": 0.3, "unit": "kg"},
+            {"ingredient_id": "ing2e3f4g5h6", "quantity": 0.15, "unit": "kg"}
+        ]
+    },
+    {
+        "id": "1a2b3c4d-5e6f-7890-abcd-ef1234567890",
+        "name": "Wan Pot Rice Bundle",
+        "base_price": 80.00,
+        "description": "Everything you need for a quick and easy wan pot rice.",
+        "is_active": true,
+        "recipe": [
+            {"ingredient_id": "ing6u7v8w9x0", "quantity": 0.5, "unit": "kg"},
+            {"ingredient_id": "ing1a2b3c4d5", "quantity": 0.2, "unit": "kg"}
+        ]
+    }
+]
