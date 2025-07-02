@@ -1,192 +1,166 @@
-from flask import Blueprint, request, jsonify
+import json
+import os
 from datetime import datetime
 import uuid
-from modules.utils import load_json_data, save_json_data
 
-customers_bp = Blueprint('customers', __name__, url_prefix='/api/customers')
+# Define the path to the data files
+DATA_DIR = 'data'
+CUSTOMERS_FILE = os.path.join(DATA_DIR, 'customers.json')
+ORDERS_FILE = os.path.join(DATA_DIR, 'orders.json')
 
-# --- Helper functions for data access within this module ---
-def _get_all_customers():
-    return load_json_data('customers.json')
+# Ensure the data directory exists
+os.makedirs(DATA_DIR, exist_ok=True)
 
-def _save_all_customers(customers):
-    save_json_data('customers.json', customers)
+# --- Helper Functions for Data Loading/Saving ---
 
-def _get_all_orders():
-    return load_json_data('orders.json')
+def _load_data(filepath):
+    """Loads data from a JSON file."""
+    if not os.path.exists(filepath):
+        return []
+    with open(filepath, 'r') as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
 
-def _save_all_orders(orders):
-    save_json_data('orders.json', orders)
+def _save_data(filepath, data):
+    """Saves data to a JSON file."""
+    with open(filepath, 'w') as f:
+        json.dump(data, f, indent=4)
 
-def _get_all_bundles():
-    return load_json_data('bundles.json')
+# --- Customer Functions ---
 
-def _get_all_add_ons():
-    return load_json_data('add_ons.json')
-
-# --- API Endpoints: Customers ---
-
-@customers_bp.route('/', methods=['GET'])
-def get_customers():
+def get_all_customers():
     """
-    Retrieves all customers with aggregated order data.
-    Use Case: Displaying customer directory, customer relationship management.
+    Retrieves all customers and dynamically calculates their total orders
+    and last order date.
     """
-    customers = _get_all_customers()
-    orders = _get_all_orders()
+    customers = _load_data(CUSTOMERS_FILE)
+    orders = _load_data(ORDERS_FILE)
+    
+    customer_orders_map = {}
+    for order in orders:
+        customer_id = order.get('customer_id')
+        if customer_id not in customer_orders_map:
+            customer_orders_map[customer_id] = []
+        customer_orders_map[customer_id].append(order)
 
-    customer_data = []
     for customer in customers:
-        customer_orders = [o for o in orders if o['customer_id'] == customer['id']]
-        total_orders_count = len(customer_orders)
+        customer_id = customer['id']
+        customer_orders = customer_orders_map.get(customer_id, [])
         
-        last_order_date = None
+        customer['total_orders_count'] = len(customer_orders)
+        
+        # Calculate last_order_date
         if customer_orders:
-            # Sort orders by timestamp to find the latest
-            customer_orders.sort(key=lambda x: x.get('order_received_timestamp', ''), reverse=True)
-            last_order_date = customer_orders[0].get('order_received_timestamp')
+            latest_order = max(
+                customer_orders, 
+                key=lambda o: datetime.fromisoformat(o['order_received_timestamp'])
+            )
+            customer['last_order_date'] = latest_order['order_received_timestamp'].split('T')[0] # Just date part
+        else:
+            customer['last_order_date'] = None
+            
+    return customers
 
-        customer_data.append({
-            'id': customer['id'],
-            'name': customer['name'],
-            'whatsapp_number': customer.get('whatsapp_number', 'N/A'),
-            'delivery_address': customer.get('delivery_address', 'N/A'),
-            'email': customer.get('email', ''), # Added email
-            'discounts': customer.get('discounts', ''), # Added discounts
-            'special_message': customer.get('special_message', ''), # Added special_message
-            'total_orders_count': total_orders_count,
-            'last_order_date': last_order_date
-        })
-    return jsonify(customer_data)
-
-@customers_bp.route('/<string:customer_id>', methods=['GET'])
 def get_customer(customer_id):
     """
-    Retrieves a single customer by ID.
-    Use Case: Viewing detailed customer profile.
+    Retrieves a single customer by ID and dynamically calculates their
+    total orders and last order date.
     """
-    customers = _get_all_customers()
+    customers = _load_data(CUSTOMERS_FILE)
     customer = next((c for c in customers if c['id'] == customer_id), None)
-    if customer:
-        return jsonify(customer)
-    return jsonify({'error': 'Customer not found'}), 404
-
-@customers_bp.route('/', methods=['POST'])
-def add_customer():
-    """
-    Adds a new customer.
-    Use Case: New customer registration.
-    Expected Request Body:
-    {
-        "name": "Jane Doe",
-        "whatsapp_number": "+23277123456",
-        "delivery_address": "123 Main St, Freetown",
-        "email": "jane@example.com", // Optional
-        "discounts": "10% off first order", // Optional
-        "special_message": "Likes extra spicy food" // Optional
-    }
-    """
-    new_customer_data = request.json
-    customers = _get_all_customers()
-
-    if not all(k in new_customer_data for k in ['name', 'whatsapp_number', 'delivery_address']):
-        return jsonify({'error': 'Missing required customer fields (name, whatsapp_number, delivery_address)'}), 400
-
-    # Basic validation for WhatsApp number format (optional, can be more robust)
-    if not new_customer_data['whatsapp_number'].strip().replace(" ", "").startswith('+232'):
-        return jsonify({'error': 'WhatsApp number must start with +232 and include country code'}), 400
-
-    new_customer_data['id'] = str(uuid.uuid4())
-    new_customer_data['email'] = new_customer_data.get('email', '')
-    new_customer_data['discounts'] = new_customer_data.get('discounts', '')
-    new_customer_data['special_message'] = new_customer_data.get('special_message', '')
-
-    customers.append(new_customer_data)
-    _save_all_customers(customers)
-    return jsonify(new_customer_data), 201
-
-@customers_bp.route('/<string:customer_id>', methods=['PUT'])
-def update_customer(customer_id):
-    """
-    Updates an existing customer's details.
-    Use Case: Updating contact info, adding loyalty notes.
-    Expected Request Body:
-    {
-        "name": "Jane A. Doe",
-        "email": "jane.doe@example.com"
-    }
-    """
-    updated_data = request.json
-    customers = _get_all_customers()
     
+    if customer:
+        orders = _load_data(ORDERS_FILE)
+        customer_orders = [o for o in orders if o.get('customer_id') == customer_id]
+        
+        customer['total_orders_count'] = len(customer_orders)
+        
+        if customer_orders:
+            latest_order = max(
+                customer_orders, 
+                key=lambda o: datetime.fromisoformat(o['order_received_timestamp'])
+            )
+            customer['last_order_date'] = latest_order['order_received_timestamp'].split('T')[0]
+        else:
+            customer['last_order_date'] = None
+            
+    return customer
+
+def add_customer(customer_data):
+    """Adds a new customer."""
+    customers = _load_data(CUSTOMERS_FILE)
+    new_customer = {
+        'id': str(uuid.uuid4()),
+        'name': customer_data['name'],
+        'whatsapp_number': customer_data['whatsapp_number'],
+        'delivery_address': customer_data['delivery_address'],
+        'email': customer_data.get('email'),
+        'discounts': customer_data.get('discounts', ''),
+        'special_message': customer_data.get('special_message', ''),
+        'created_at': datetime.now().isoformat(),
+        # total_orders_count and last_order_date will be calculated dynamically on retrieval
+    }
+    customers.append(new_customer)
+    _save_data(CUSTOMERS_FILE, customers)
+    return new_customer
+
+def update_customer(customer_id, updated_data):
+    """Updates an existing customer's information."""
+    customers = _load_data(CUSTOMERS_FILE)
     for i, customer in enumerate(customers):
         if customer['id'] == customer_id:
-            for key, value in updated_data.items():
-                if key in ['name', 'whatsapp_number', 'delivery_address', 'email', 'discounts', 'special_message']:
-                    customer[key] = value
-            customers[i] = customer
-            _save_all_customers(customers)
-            return jsonify(customer)
-    return jsonify({'error': 'Customer not found'}), 404
+            # Update only allowed fields
+            customer['name'] = updated_data.get('name', customer['name'])
+            customer['whatsapp_number'] = updated_data.get('whatsapp_number', customer['whatsapp_number'])
+            customer['delivery_address'] = updated_data.get('delivery_address', customer['delivery_address'])
+            customer['email'] = updated_data.get('email', customer['email'])
+            customer['discounts'] = updated_data.get('discounts', customer['discounts'])
+            customer['special_message'] = updated_data.get('special_message', customer['special_message'])
+            _save_data(CUSTOMERS_FILE, customers)
+            return customer
+    return None
 
-@customers_bp.route('/<string:customer_id>', methods=['DELETE'])
 def delete_customer(customer_id):
     """
-    Deletes a customer and all associated orders.
-    Use Case: Customer requests data removal.
+    Deletes a customer and all their associated orders.
+    Returns True if successful, False otherwise.
     """
-    customers = _get_all_customers()
-    orders = _get_all_orders()
-
-    customer_found = False
-    updated_customers = [c for c in customers if c['id'] != customer_id]
-    if len(updated_customers) < len(customers): # Customer was found and removed
-        customer_found = True
-        _save_all_customers(updated_customers)
-
-        # Remove all orders associated with this customer
-        updated_orders = [o for o in orders if o['customer_id'] != customer_id]
-        _save_all_orders(updated_orders)
+    customers = _load_data(CUSTOMERS_FILE)
+    original_len_customers = len(customers)
+    customers = [c for c in customers if c['id'] != customer_id]
     
-    if customer_found:
-        return jsonify({'message': f'Customer {customer_id} and all associated orders deleted successfully'}), 200
-    return jsonify({'error': 'Customer not found'}), 404
+    if len(customers) == original_len_customers:
+        return False # Customer not found
 
+    _save_data(CUSTOMERS_FILE, customers)
 
-@customers_bp.route('/<string:customer_id>/orders', methods=['GET'])
+    # Also delete associated orders
+    orders = _load_data(ORDERS_FILE)
+    orders = [o for o in orders if o.get('customer_id') != customer_id]
+    _save_data(ORDERS_FILE, orders)
+    
+    return True
+
 def get_customer_orders(customer_id):
-    """
-    Retrieves all orders placed by a specific customer.
-    Use Case: Reviewing a customer's purchase history.
-    """
-    orders = _get_all_orders()
-    bundles = _get_all_bundles()
-    add_ons_list = _get_all_add_ons()
+    """Retrieves all orders for a specific customer."""
+    orders = _load_data(ORDERS_FILE)
+    bundles = _load_data(os.path.join(DATA_DIR, 'bundles.json'))
+    add_ons = _load_data(os.path.join(DATA_DIR, 'add_ons.json'))
 
     customer_orders = [o for o in orders if o.get('customer_id') == customer_id]
-    
-    enriched_orders = []
-    for order in customer_orders:
-        order_copy = order.copy()
-        
-        # Get bundle name
-        bundle = next((b for b in bundles if b['id'] == order.get('bundle_id')), None)
-        order_copy['bundle_name'] = bundle['name'] if bundle else 'Unknown Bundle'
 
-        # Get add-on names
-        add_on_names = []
-        for ao_id in order.get('add_ons', []):
-            add_on = next((ao for ao in add_ons_list if ao['id'] == ao_id), None)
-            if add_on:
-                add_on_names.append(add_on['name'])
-        order_copy['add_ons_names'] = add_on_names
+    # Enhance order data with bundle and add-on names for display
+    for order in customer_orders:
+        bundle_name = next((b['name'] for b in bundles if b['id'] == order.get('bundle_id')), 'Unknown Bundle')
+        order['bundle_name'] = bundle_name
         
-        enriched_orders.append(order_copy)
-    
-    # Sort by order received timestamp (newest first)
-    sorted_orders = sorted(
-        enriched_orders, 
-        key=lambda x: datetime.fromisoformat(x['order_received_timestamp']) if x.get('order_received_timestamp') else datetime.min, 
-        reverse=True
-    )
-    return jsonify(sorted_orders)
+        addon_names = []
+        for addon_id in order.get('add_ons', []):
+            addon_name = next((ao['name'] for ao in add_ons if ao['id'] == addon_id), None)
+            if addon_name:
+                addon_names.append(addon_name)
+        order['add_ons_names'] = addon_names
+        
+    return customer_orders
