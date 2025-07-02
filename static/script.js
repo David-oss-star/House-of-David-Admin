@@ -87,6 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCustomerOrdersTableBody = document.querySelector('#modalCustomerOrdersTable tbody');
     const noCustomerOrdersMessage = document.getElementById('noCustomerOrdersMessage');
 
+    // NEW: Editable customer fields in modal
+    const modalEditCustomerName = document.getElementById('modalEditCustomerName');
+    const modalEditCustomerWhatsapp = document.getElementById('modalEditCustomerWhatsapp');
+    const modalEditCustomerAddress = document.getElementById('modalEditCustomerAddress');
+    const modalEditCustomerEmail = document.getElementById('modalEditCustomerEmail');
+
+
     // Product Details Modal elements
     const productDetailsModal = document.getElementById('productDetailsModal');
     const productModalCloseButton = document.getElementById('productModalCloseButton');
@@ -753,6 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function populateCustomerDetailsModal(customer, orders) {
+        // Display fields (read-only for quick view)
         modalCustomerName.textContent = customer.name;
         modalCustomerWhatsapp.textContent = customer.whatsapp_number;
         modalCustomerAddress.textContent = customer.delivery_address;
@@ -760,6 +768,11 @@ document.addEventListener('DOMContentLoaded', () => {
         modalCustomerTotalOrders.textContent = customer.total_orders_count || 0;
         modalCustomerLastOrder.textContent = customer.last_order_date || 'N/A';
 
+        // Editable fields
+        modalEditCustomerName.value = customer.name || '';
+        modalEditCustomerWhatsapp.value = customer.whatsapp_number || '';
+        modalEditCustomerAddress.value = customer.delivery_address || '';
+        modalEditCustomerEmail.value = customer.email || '';
         modalCustomerDiscounts.value = customer.discounts || '';
         modalCustomerSpecialMessage.value = customer.special_message || '';
 
@@ -797,9 +810,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentModalCustomerId) return;
 
         const updatedData = {
+            name: modalEditCustomerName.value.trim(),
+            whatsapp_number: modalEditCustomerWhatsapp.value.trim(),
+            delivery_address: modalEditCustomerAddress.value.trim(),
+            email: modalEditCustomerEmail.value.trim(),
             discounts: modalCustomerDiscounts.value.trim(),
             special_message: modalCustomerSpecialMessage.value.trim()
         };
+
+        // Basic validation for WhatsApp number format (optional, can be more robust)
+        if (updatedData.whatsapp_number && !updatedData.whatsapp_number.startsWith('+232')) {
+            showMessage('WhatsApp number must start with +232 and include country code.', 'error');
+            return;
+        }
 
         try {
             const response = await fetch(`/api/customers/${currentModalCustomerId}`, {
@@ -1581,7 +1604,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Reporting ---
-    // NEW: Generic function to toggle report visibility and fetch/render if hidden
+    // Function to toggle report visibility and fetch/render if hidden
     async function toggleReportDisplay(event) {
         const button = event.target;
         const targetReportId = button.dataset.targetReport;
@@ -1591,13 +1614,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Report is hidden, so show it and fetch data
             outputElement.innerHTML = '<p>Generating report...</p>'; // Show loading message
             try {
-                // Corrected: Remove 'generate' prefix, then convert camelCase to kebab-case, then lowercase
-                let baseEndpoint = button.id.replace('generate', ''); // e.g., "DailySummary"
-                const apiEndpoint = baseEndpoint.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+                // Corrected: Extract endpoint name from button ID, convert to kebab-case
+                let baseEndpointName = button.id.replace('generate', ''); // e.g., "DailySummary"
+                // Convert camelCase to kebab-case: insert hyphen before uppercase letters, then lowercase
+                const apiEndpoint = baseEndpointName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
                 
                 const response = await fetch(`/api/reports/${apiEndpoint}`);
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
                 }
                 const reportData = await response.json();
                 outputElement.innerHTML = formatReportOutput(reportData, apiEndpoint);
@@ -1682,6 +1707,17 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (event) => {
             // First, hide ALL content sections
             contentSections.forEach(section => section.classList.add('hidden'));
+
+            // Additionally, ensure all individual report outputs are hidden when changing tabs.
+            // This prevents report content from staying visible if the Reports tab was active
+            // and a report was open, then user switched away.
+            dailySummaryOutput.classList.add('hidden');
+            dailySummaryOutput.innerHTML = ''; // Clear content too
+            salesByBundleOutput.classList.add('hidden');
+            salesByBundleOutput.innerHTML = '';
+            agentPerformanceOutput.classList.add('hidden');
+            agentPerformanceOutput.innerHTML = '';
+
 
             // Remove active class from all nav links
             navLinks.forEach(l => l.classList.remove('active'));
