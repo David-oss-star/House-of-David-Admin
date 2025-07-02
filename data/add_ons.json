@@ -19,15 +19,21 @@
     {
         "id": "ao3c2d1e-0f9a-8b7c-6d5e-4f3a2b1c0d9e",
         "name": "Fresh Crab",
-        "price": 30.0,
+        "price": 10,
         "unit": "piece",
-        "is_active": true
+        "is_active": true,
+        "current_stock": 5,
+        "unit_cost": 8,
+        "reorder_point": 5
     },
     {
         "id": "ao8e7d6c-5b4a-3928-1029-384756c2d1e0",
         "name": "Extra Pepper (scotch bonnet)",
-        "price": 5.0,
+        "price": 5,
         "unit": "bag",
-        "is_active": true
+        "is_active": true,
+        "current_stock": 25.0,
+        "unit_cost": 7.0,
+        "reorder_point": 10
     }
 ]

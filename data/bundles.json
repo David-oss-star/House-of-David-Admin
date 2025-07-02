@@ -52,7 +52,7 @@
         "name": "Wan Pot Rice Bundle",
         "base_price": 80,
         "description": "Everything you need for a quick and easy wan pot rice.",
-        "is_active": false,
+        "is_active": true,
         "recipe": [
             {
                 "ingredient_id": "ing6u7v8w9x0",

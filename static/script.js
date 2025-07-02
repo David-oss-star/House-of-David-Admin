@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dailySummaryOutput = document.getElementById('dailySummaryOutput');
     const salesByBundleOutput = document.getElementById('salesByBundleOutput');
     const agentPerformanceOutput = document.getElementById('agentPerformanceOutput');
+    const dailySummaryDateInput = document.getElementById('dailySummaryDateInput'); // NEW: Date input for daily summary
 
     const grandTotalSalesElement = document.getElementById('grandTotalSales');
     const totalOrdersAllTimeElement = document.getElementById('totalOrdersAllTime');
@@ -87,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCustomerOrdersTableBody = document.querySelector('#modalCustomerOrdersTable tbody');
     const noCustomerOrdersMessage = document.getElementById('noCustomerOrdersMessage');
 
-    // NEW: Editable customer fields in modal
+    // Editable customer fields in modal
     const modalEditCustomerName = document.getElementById('modalEditCustomerName');
     const modalEditCustomerWhatsapp = document.getElementById('modalEditCustomerWhatsapp');
     const modalEditCustomerAddress = document.getElementById('modalEditCustomerAddress');
@@ -321,8 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const deliveryTime = order.delivery_timestamp ? new Date(order.delivery_timestamp).toLocaleString() : 'N/A';
             
             const bundleName = allBundles.find(b => b.id === order.bundle_id)?.name || 'N/A';
-            const addOnsNames = (order.add_ons || [])
-                .map(id => allAddOns.find(ao => ao.id === id)?.name)
+            const addOnsNames = (order.add_ons_names || []) // Use add_ons_names directly from backend
                 .filter(name => name)
                 .join(', ') || 'None';
 
@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const confirmUpdate = confirm(`Are you sure you want to change the status of order ${orderId.substring(0, 8)}... to "${newStatus}"?`);
         
         if (!confirmUpdate) {
-            fetchAndRenderOrders();
+            fetchAndRenderOrders(); // Revert selection if cancelled
             return;
         }
 
@@ -537,19 +537,19 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error updating order status:', error);
             showMessage(`Failed to update order status: ${error.message}`, 'error');
-            fetchAndRenderOrders();
+            fetchAndRenderOrders(); // Revert selection on error
         }
     }
 
     async function handleAgentAssignment(event) {
         const orderId = event.target.dataset.orderId;
-        const newAgentId = event.target.value;
+        const newAgentId = event.target.value; // This will be agent ID or empty string ""
 
         try {
             const response = await fetch(`/api/orders/${orderId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ delivery_agent_id: newAgentId })
+                body: JSON.stringify({ delivery_agent_id: newAgentId || null }) // Send null if empty string
             });
 
             if (!response.ok) {
@@ -1619,12 +1619,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Convert camelCase to kebab-case: insert hyphen before uppercase letters, then lowercase
                 const apiEndpoint = baseEndpointName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
                 
-                const response = await fetch(`/api/reports/${apiEndpoint}`);
+                let url = `/api/reports/${apiEndpoint}`;
+
+                // NEW: Add date parameter for daily-summary report
+                if (apiEndpoint === 'daily-summary') {
+                    const selectedDate = dailySummaryDateInput.value;
+                    if (selectedDate) {
+                        url += `?date=${selectedDate}`;
+                    }
+                }
+
+                const response = await fetch(url);
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
                 }
                 const reportData = await response.json();
+                console.log(`Raw report data for ${apiEndpoint}:`, reportData); // DEBUG LOG
                 outputElement.innerHTML = formatReportOutput(reportData, apiEndpoint);
                 outputElement.classList.remove('hidden'); // Show the content
             } catch (error) {
@@ -1730,6 +1741,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Specific data fetching/rendering based on tab
             if (targetId === 'orders-list-section') {
+                populateFormDropdowns(); // Ensure agents are loaded for the filter dropdown
                 fetchAndRenderOrders();
             } else if (targetId === 'customers-list-section') {
                 fetchAndRenderCustomers();
@@ -1746,9 +1758,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 customerIdSelect.required = true;
             } else if (targetId === 'dashboard-section') {
                 fetchAndRenderDashboardMetrics();
+            } else if (targetId === 'reports-section') {
+                // Set default date for daily summary to today
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+                const day = String(today.getDate()).padStart(2, '0');
+                dailySummaryDateInput.value = `${year}-${month}-${day}`;
             }
-            // For reports, we don't fetch on tab switch, but rely on button click
-            // to allow reports to be collapsed by default.
         });
     });
 
@@ -1762,5 +1779,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Initial Load ---
-    document.querySelector('.nav-link[data-target="dashboard-section"]').click();
+    // Ensure dropdowns are populated on initial load before any tab is clicked
+    populateFormDropdowns().then(() => {
+        // Then click the dashboard tab to render initial content
+        document.querySelector('.nav-link[data-target="dashboard-section"]').click();
+    });
 });

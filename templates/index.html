@@ -460,13 +460,16 @@
         <h2>Reports</h2>
 
         <div class="report-item">
-          <button
-            class="btn primary report-toggle-btn"
-            data-target-report="dailySummaryOutput"
-            id="generateDailySummary"
-          >
-            Generate Daily Summary
-          </button>
+          <div class="report-controls">
+            <button
+              class="btn primary report-toggle-btn"
+              data-target-report="dailySummaryOutput"
+              id="generateDailySummary"
+            >
+              Generate Daily Summary
+            </button>
+            <input type="date" id="dailySummaryDateInput" class="date-input" />
+          </div>
           <div id="dailySummaryOutput" class="report-output hidden"></div>
         </div>
 
