@@ -1,805 +1,643 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>House of David - Order Management</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-  </head>
-  <body>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
     <div class="container">
-      <header>
-        <h1>House of David 👑</h1>
-        <p>Your Gateway to the Good Life - Order Management System</p>
-      </header>
-
-      <nav class="main-nav">
-        <button class="nav-link active" data-target="dashboard-section">
-          Dashboard
-        </button>
-        <button class="nav-link" data-target="orders-list-section">
-          View Orders
-        </button>
-        <button class="nav-link" data-target="add-order-section">
-          Add New Order
-        </button>
-        <button class="nav-link" data-target="customers-list-section">
-          Customers
-        </button>
-        <button class="nav-link" data-target="inventory-section">
-          Inventory Status
-        </button>
-        <button class="nav-link" data-target="reports-section">Reports</button>
-      </nav>
-
-      <section id="add-order-section" class="content-section hidden">
-        <h2>Add New Order</h2>
-        <form id="orderForm">
-          <div class="form-group customer-selection-group">
-            <label for="customerId">Customer:</label>
-            <div class="customer-input-row">
-              <select id="customerId" required>
-                <!-- Options will be loaded dynamically by JavaScript -->
-                <option value="">Select Existing Customer</option>
-              </select>
-              <button
-                type="button"
-                class="btn secondary small-btn"
-                id="toggleNewCustomerFieldsBtn"
-              >
-                Toggle New Customer Fields
-              </button>
+        <header>
+            <h1>House of David 👑</h1>
+            <p>Your Gateway to the Good Life - Order Management System</p>
+            <div class="auth-status">
+                <span id="loggedInUser">Logged in as: <strong></strong></span>
+                <button id="logoutBtn" class="btn secondary small-btn">Logout</button>
             </div>
-          </div>
-          <div class="form-group" id="newCustomerFields" style="display: none">
-            <h3>New Customer Details:</h3>
-            <label for="newCustomerName">Name:</label>
-            <input type="text" id="newCustomerName" />
-            <label for="newWhatsappNumber">WhatsApp Number:</label>
-            <input
-              type="tel"
-              id="newWhatsappNumber"
-              placeholder="+232 7X XXX XXX"
-            />
-            <label for="newDeliveryAddress">Delivery Address:</label>
-            <textarea id="newDeliveryAddress" rows="2"></textarea>
-            <button type="button" class="btn primary" id="saveNewCustomerBtn">
-              Save New Customer
-            </button>
-            <p class="form-note">
-              Save new customer first, then select them from the dropdown above
-              to proceed with the order.
-            </p>
-          </div>
+        </header>
 
-          <div class="form-group">
-            <label for="bundleId">Bundle Type:</label>
-            <select id="bundleId" required>
-              <option value="">Select Bundle</option>
-              <!-- Options will be loaded dynamically by JavaScript -->
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="addOnsContainer">Add-ons (Optional):</label>
-            <div id="addOnsContainer" class="add-ons-checkboxes">
-              <!-- Checkboxes will be dynamically inserted here -->
-              <p class="no-addons-message">No add-ons available.</p>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="totalPrice">Total Price (Le):</label>
-            <input
-              type="number"
-              id="totalPrice"
-              step="0.01"
-              value="0.00"
-              readonly
-              required
-            />
-            <p class="form-note">
-              Price calculated automatically based on selections.
-            </p>
-          </div>
-          <div class="form-group">
-            <label for="paymentStatus">Payment Status:</label>
-            <select id="paymentStatus">
-              <option value="Pending">Pending</option>
-              <option value="Paid">Paid</option>
-            </select>
-          </div>
-          <button type="submit" class="btn primary">Add Order</button>
-        </form>
-      </section>
+        <nav class="main-nav" id="mainNav">
+            <button class="nav-link active" data-target="dashboard-section">Dashboard</button>
+            <button class="nav-link" data-target="orders-list-section">View Orders</button>
+            <button class="nav-link" data-target="add-order-section">Add New Order</button>
+            <button class="nav-link" data-target="deliveries-section">Deliveries</button>
+            <button class="nav-link" data-target="customers-list-section">Customers</button>
+            <button class="nav-link" data-target="suppliers-section">Suppliers</button>
+            <button class="nav-link" data-target="inventory-section">Inventory Status</button>
+            <button class="nav-link" data-target="reports-section">Reports</button>
+            <button class="nav-link" data-target="on-the-house-section">On The House</button>
+            <button class="nav-link" data-target="workers-section">Workers</button>
+        </nav>
 
-      <section id="orders-list-section" class="content-section hidden">
-        <h2>All Orders</h2>
-        <div class="filter-controls">
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Search customer, number, address..."
-          />
-          <select id="statusFilter">
-            <option value="All">All Statuses</option>
-            <option value="New">New</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Preparing">Preparing</option>
-            <option value="Packed">Packed</option>
-            <option value="Out for Delivery">Out for Delivery</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-          <select id="agentFilter">
-            <option value="All">All Agents</option>
-            <!-- Options will be loaded dynamically by JavaScript -->
-          </select>
-        </div>
-        <div class="table-container">
-          <table id="ordersTable">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer Name</th>
-                <th>WhatsApp Number</th>
-                <th>Address</th>
-                <th>Bundle</th>
-                <th>Add-ons</th>
-                <th>Price (Le)</th>
-                <th>Payment Status</th>
-                <th>Order Status</th>
-                <th>Agent</th>
-                <th>Order Time</th>
-                <th>Delivery Time</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Order rows will be dynamically inserted here -->
-            </tbody>
-          </table>
-        </div>
-        <p id="noOrdersMessage" style="display: none">
-          No orders found matching your criteria.
-        </p>
-      </section>
+        <!-- Login/Registration Section -->
+        <section id="auth-section" class="content-section">
+            <div class="auth-container">
+                <h2>Welcome to House of David Admin</h2>
+                <p>Please Login or Register to continue.</p>
 
-      <section id="customers-list-section" class="content-section hidden">
-        <h2>Customer Directory</h2>
-        <div class="filter-controls">
-          <input
-            type="text"
-            id="customerSearchInput"
-            placeholder="Search customer name or number..."
-          />
-        </div>
-        <div class="table-container">
-          <table id="customersTable">
-            <thead>
-              <tr>
-                <th>Customer ID</th>
-                <th>Name</th>
-                <th>WhatsApp Number</th>
-                <th>Delivery Address</th>
-                <th>Email</th>
-                <th>Total Orders</th>
-                <th>Last Order Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Customer rows will be dynamically inserted here -->
-            </tbody>
-          </table>
-        </div>
-        <p id="noCustomersMessage" style="display: none">
-          No customers found matching your criteria.
-        </p>
-      </section>
+                <div class="auth-form-toggle">
+                    <button class="btn primary" id="showLoginBtn">Login</button>
+                    <button class="btn secondary" id="showRegisterBtn">Register</button>
+                </div>
 
-      <section id="inventory-section" class="content-section hidden">
-        <h2>Inventory Status</h2>
+                <form id="loginForm" class="auth-form">
+                    <h3>Login</h3>
+                    <div class="form-group">
+                        <label for="loginUsername">Username:</label>
+                        <input type="text" id="loginUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password:</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn primary">Login</button>
+                    <p class="form-note">Don't have an account? <a href="#" id="toggleToRegister">Register here</a></p>
+                </form>
 
-        <h3>Raw Ingredients</h3>
-        <div class="table-container">
-          <table id="ingredientsTable">
-            <thead>
-              <tr>
-                <th>Ingredient</th>
-                <th>Current Stock</th>
-                <th>Unit</th>
-                <th>Reorder Point</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Ingredients will be dynamically inserted here -->
-            </tbody>
-          </table>
-        </div>
+                <form id="registerForm" class="auth-form hidden">
+                    <h3>Register</h3>
+                    <div class="form-group">
+                        <label for="registerUsername">Username:</label>
+                        <input type="text" id="registerUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password:</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password:</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn primary">Register</button>
+                    <p class="form-note">Already have an account? <a href="#" id="toggleToLogin">Login here</a></p>
+                </form>
+            </div>
+        </section>
 
-        <h3>Meal Bundles (Products)</h3>
-        <div class="table-container">
-          <table id="bundlesTable">
-            <thead>
-              <tr>
-                <th>Bundle Name</th>
-                <th>Base Price (Le)</th>
-                <th>Description</th>
-                <th>Active</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Bundles will be dynamically inserted here -->
-            </tbody>
-          </table>
-        </div>
 
-        <h3>Add-ons</h3>
-        <div class="table-container">
-          <table id="addOnsTable">
-            <thead>
-              <tr>
-                <th>Add-on Name</th>
-                <th>Price (Le)</th>
-                <th>Unit</th>
-                <th>Current Stock</th>
-                <th>Unit Cost (Le)</th>
-                <th>Total Value (Le)</th>
-                <th>Reorder Point</th>
-                <th>Status</th>
-                <th>Active</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Add-ons will be dynamically inserted here -->
-            </tbody>
-          </table>
-        </div>
+        <!-- Main Application Sections -->
+        <section id="add-order-section" class="content-section">
+            <h2>Add New Order</h2>
+            <form id="orderForm">
+                <div class="form-group customer-selection-group">
+                    <label for="customerId">Customer:</label>
+                    <div class="customer-input-row">
+                        <select id="customerId" required>
+                            <!-- Options will be loaded dynamically by JavaScript -->
+                            <option value="">Select Existing Customer</option>
+                        </select>
+                        <button type="button" class="btn secondary small-btn" id="toggleNewCustomerFieldsBtn">Toggle New Customer Fields</button>
+                    </div>
+                </div>
+                <div class="form-group" id="newCustomerFields" style="display: none;">
+                    <h3>New Customer Details:</h3>
+                    <label for="newCustomerName">Name:</label>
+                    <input type="text" id="newCustomerName">
+                    <label for="newWhatsappNumber">WhatsApp Number:</label>
+                    <input type="tel" id="newWhatsappNumber" placeholder="+232 7X XXX XXX">
+                    <label for="newDeliveryAddress">Delivery Address:</label>
+                    <textarea id="newDeliveryAddress" rows="2"></textarea>
+                    <button type="button" class="btn primary" id="saveNewCustomerBtn">Save New Customer</button>
+                    <p class="form-note">Save new customer first, then select them from the dropdown above to proceed with the order.</p>
+                </div>
 
-        <h3 class="add-inventory-toggle">
-          Add New Inventory Item
-          <button
-            type="button"
-            class="btn secondary small-btn"
-            id="toggleAddInventoryFormBtn"
-          >
-            Toggle Form
-          </button>
-        </h3>
-        <div
-          id="addInventoryFormContainer"
-          class="collapsible-section"
-          style="display: none"
-        >
-          <div class="form-group">
-            <label for="inventoryItemType">Select Item Type to Add:</label>
-            <select id="inventoryItemType" class="full-width-select">
-              <option value="">-- Select --</option>
-              <option value="ingredient">Ingredient</option>
-              <option value="bundle">Bundle</option>
-              <option value="addon">Add-on</option>
-            </select>
-          </div>
+                <div class="form-group">
+                    <label for="bundleId">Bundle Type:</label>
+                    <select id="bundleId" required>
+                        <option value="">Select Bundle</option>
+                        <!-- Options will be loaded dynamically by JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="addOnsContainer">Add-ons (Optional):</label>
+                    <div id="addOnsContainer" class="add-ons-checkboxes">
+                        <!-- Checkboxes will be dynamically inserted here -->
+                        <p class="no-addons-message">No add-ons available.</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="totalPrice">Total Price (Le):</label>
+                    <input type="number" id="totalPrice" step="0.01" value="0.00" readonly required>
+                    <p class="form-note">Price calculated automatically based on selections.</p>
+                </div>
+                <div class="form-group">
+                    <label for="paymentStatus">Payment Status:</label>
+                    <select id="paymentStatus">
+                        <option value="Pending">Pending</option>
+                        <option value="Paid">Paid</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn primary">Add Order</button>
+            </form>
+        </section>
 
-          <form id="addIngredientForm" class="inventory-add-form hidden">
-            <h4>Add New Ingredient</h4>
-            <div class="form-group">
-              <label for="newIngredientName">Name:</label>
-              <input type="text" id="newIngredientName" required />
+        <section id="orders-list-section" class="content-section">
+            <h2>All Orders</h2>
+            <div class="filter-controls">
+                <input type="text" id="searchInput" placeholder="Search customer, number, address...">
+                <select id="statusFilter">
+                    <option value="All">All Statuses</option>
+                    <option value="New">New</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Preparing">Preparing</option>
+                    <option value="Packed">Packed</option>
+                    <option value="Out for Delivery">Out for Delivery</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+                <select id="agentFilter">
+                    <option value="All">All Agents</option>
+                    <!-- Options will be loaded dynamically by JavaScript -->
+                </select>
             </div>
-            <div class="form-group">
-              <label for="newIngredientUnit">Unit:</label>
-              <input
-                type="text"
-                id="newIngredientUnit"
-                placeholder="e.g., kg, pieces, liters"
-                required
-              />
+            <div class="table-container">
+                <table id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer Name</th>
+                            <th>WhatsApp Number</th>
+                            <th>Address</th>
+                            <th>Bundle</th>
+                            <th>Add-ons</th>
+                            <th>Price (Le)</th>
+                            <th>Payment Status</th>
+                            <th>Order Status</th>
+                            <th>Agent</th>
+                            <th>Order Time</th>
+                            <th>Delivery Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Order rows will be dynamically inserted here -->
+                    </tbody>
+                </table>
             </div>
-            <div class="form-group">
-              <label for="newIngredientCurrentStock">Current Stock:</label>
-              <input
-                type="number"
-                id="newIngredientCurrentStock"
-                step="0.01"
-                value="0"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label for="newIngredientReorderPoint"
-                >Reorder Point (Optional):</label
-              >
-              <input
-                type="number"
-                id="newIngredientReorderPoint"
-                step="0.01"
-                value="0"
-              />
-            </div>
-            <div class="form-group">
-              <label for="newIngredientLastCost"
-                >Last Cost Per Unit (Le, Optional):</label
-              >
-              <input
-                type="number"
-                id="newIngredientLastCost"
-                step="0.01"
-                value="0"
-              />
-            </div>
-            <div class="form-group">
-              <label for="newIngredientSupplier">Supplier (Optional):</label>
-              <input type="text" id="newIngredientSupplier" />
-            </div>
-            <button type="submit" class="btn primary">Add Ingredient</button>
-          </form>
+            <p id="noOrdersMessage" style="display: none;">No orders found matching your criteria.</p>
+        </section>
 
-          <form id="addBundleForm" class="inventory-add-form hidden">
-            <h4>Add New Meal Bundle</h4>
-            <div class="form-group">
-              <label for="newBundleName">Bundle Name:</label>
-              <input type="text" id="newBundleName" required />
+        <section id="deliveries-section" class="content-section">
+            <h2>Deliveries Management</h2>
+            <p>This section will manage delivery assignments and tracking.</p>
+            <!-- Content for Deliveries will go here -->
+        </section>
+
+        <section id="customers-list-section" class="content-section">
+            <h2>Customer Directory</h2>
+            <div class="filter-controls">
+                <input type="text" id="customerSearchInput" placeholder="Search customer name or number...">
             </div>
-            <div class="form-group">
-              <label for="newBundleBasePrice">Base Price (Le):</label>
-              <input
-                type="number"
-                id="newBundleBasePrice"
-                step="0.01"
-                required
-              />
+            <div class="table-container">
+                <table id="customersTable">
+                    <thead>
+                        <tr>
+                            <th>Customer ID</th>
+                            <th>Name</th>
+                            <th>WhatsApp Number</th>
+                            <th>Delivery Address</th>
+                            <th>Email</th>
+                            <th>Total Orders</th>
+                            <th>Last Order Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Customer rows will be dynamically inserted here -->
+                    </tbody>
+                </table>
             </div>
-            <div class="form-group">
-              <label for="newBundleDescription">Description:</label>
-              <textarea id="newBundleDescription" rows="2" required></textarea>
-            </div>
-            <div class="form-group checkbox-group">
-              <input type="checkbox" id="newBundleIsActive" checked />
-              <label for="newBundleIsActive">Is Active</label>
+            <p id="noCustomersMessage" style="display: none;">No customers found matching your criteria.</p>
+        </section>
+        
+        <section id="suppliers-section" class="content-section">
+            <h2>Supplier Management</h2>
+            <p>This section will manage supplier information and procurement.</p>
+            <!-- Content for Suppliers will go here -->
+        </section>
+
+        <section id="inventory-section" class="content-section">
+            <h2>Inventory Status</h2>
+
+            <h3>Raw Ingredients</h3>
+            <div class="table-container">
+                <table id="ingredientsTable">
+                    <thead>
+                        <tr>
+                            <th>Ingredient</th>
+                            <th>Current Stock</th>
+                            <th>Unit</th>
+                            <th>Reorder Point</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Ingredients will be dynamically inserted here -->
+                    </tbody>
+                </table>
             </div>
 
-            <h4 class="recipe-heading">Recipe (Ingredients)</h4>
-            <div id="bundleRecipeInputs">
-              <!-- Dynamic recipe input rows will be added here -->
-              <p class="no-recipe-items">No ingredients added yet.</p>
+            <h3>Meal Bundles (Products)</h3>
+            <div class="table-container">
+                <table id="bundlesTable">
+                    <thead>
+                        <tr>
+                            <th>Bundle Name</th>
+                            <th>Base Price (Le)</th>
+                            <th>Description</th>
+                            <th>Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Bundles will be dynamically inserted here -->
+                    </tbody>
+                </table>
             </div>
-            <div class="form-group add-recipe-item-controls">
-              <select id="recipeIngredientSelect">
-                <option value="">Select Ingredient</option>
-                <!-- Ingredients populated by JS -->
-              </select>
-              <input
-                type="number"
-                id="recipeQuantity"
-                step="0.01"
-                placeholder="Quantity"
-                value="0"
-              />
-              <input
-                type="text"
-                id="recipeUnit"
-                placeholder="Unit (e.g., kg)"
-              />
-              <button
-                type="button"
-                class="btn secondary small-btn"
-                id="addRecipeItemBtn"
-              >
-                Add Item to Recipe
-              </button>
-            </div>
-            <button type="submit" class="btn primary">Add Bundle</button>
-          </form>
 
-          <form id="addAddOnForm" class="inventory-add-form hidden">
-            <h4>Add New Add-on Product</h4>
-            <div class="form-group">
-              <label for="newAddOnName">Add-on Name:</label>
-              <input type="text" id="newAddOnName" required />
+            <h3>Add-ons</h3>
+            <div class="table-container">
+                <table id="addOnsTable">
+                    <thead>
+                        <tr>
+                            <th>Add-on Name</th>
+                            <th>Price (Le)</th>
+                            <th>Unit</th>
+                            <th>Current Stock</th>
+                            <th>Unit Cost (Le)</th>
+                            <th>Total Value (Le)</th>
+                            <th>Reorder Point</th>
+                            <th>Status</th>
+                            <th>Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Add-ons will be dynamically inserted here -->
+                    </tbody>
+                </table>
             </div>
-            <div class="form-group">
-              <label for="newAddOnPrice">Price (Le):</label>
-              <input type="number" id="newAddOnPrice" step="0.01" required />
-            </div>
-            <div class="form-group">
-              <label for="newAddOnUnit">Unit:</label>
-              <input
-                type="text"
-                id="newAddOnUnit"
-                placeholder="e.g., pcs, cup, portion"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label for="newAddOnCurrentStock">Current Stock:</label>
-              <input
-                type="number"
-                id="newAddOnCurrentStock"
-                step="0.01"
-                value="0"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label for="newAddOnUnitCost">Unit Cost (Le, Optional):</label>
-              <input
-                type="number"
-                id="newAddOnUnitCost"
-                step="0.01"
-                value="0"
-              />
-            </div>
-            <div class="form-group">
-              <label for="newAddOnReorderPoint"
-                >Reorder Point (Optional):</label
-              >
-              <input
-                type="number"
-                id="newAddOnReorderPoint"
-                step="0.01"
-                value="0"
-              />
-            </div>
-            <div class="form-group checkbox-group">
-              <input type="checkbox" id="newAddOnIsActive" checked />
-              <label for="newAddOnIsActive">Is Active</label>
-            </div>
-            <button type="submit" class="btn primary">Add Add-on</button>
-          </form>
-        </div>
-      </section>
 
-      <section id="reports-section" class="content-section hidden">
-        <h2>Reports</h2>
+            <h3 class="add-inventory-toggle">
+                Add New Inventory Item 
+                <button type="button" class="btn secondary small-btn" id="toggleAddInventoryFormBtn">Toggle Form</button>
+            </h3>
+            <div id="addInventoryFormContainer" class="collapsible-section" style="display: none;">
+                <div class="form-group">
+                    <label for="inventoryItemType">Select Item Type to Add:</label>
+                    <select id="inventoryItemType" class="full-width-select">
+                        <option value="">-- Select --</option>
+                        <option value="ingredient">Ingredient</option>
+                        <option value="bundle">Bundle</option>
+                        <option value="addon">Add-on</option>
+                    </select>
+                </div>
 
-        <div class="report-item">
-          <div class="report-controls">
-            <button
-              class="btn primary report-toggle-btn"
-              data-target-report="dailySummaryOutput"
-              id="generateDailySummary"
-            >
-              Generate Daily Summary
-            </button>
-            <input type="date" id="dailySummaryDateInput" class="date-input" />
-          </div>
-          <div id="dailySummaryOutput" class="report-output hidden"></div>
-        </div>
+                <form id="addIngredientForm" class="inventory-add-form hidden">
+                    <h4>Add New Ingredient</h4>
+                    <div class="form-group">
+                        <label for="newIngredientName">Name:</label>
+                        <input type="text" id="newIngredientName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newIngredientUnit">Unit:</label>
+                        <input type="text" id="newIngredientUnit" placeholder="e.g., kg, pieces, liters" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newIngredientCurrentStock">Current Stock:</label>
+                        <input type="number" id="newIngredientCurrentStock" step="0.01" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newIngredientReorderPoint">Reorder Point (Optional):</label>
+                        <input type="number" id="newIngredientReorderPoint" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="newIngredientLastCost">Last Cost Per Unit (Le, Optional):</label>
+                        <input type="number" id="newIngredientLastCost" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="newIngredientSupplier">Supplier (Optional):</label>
+                        <input type="text" id="newIngredientSupplier">
+                    </div>
+                    <button type="submit" class="btn primary">Add Ingredient</button>
+                </form>
 
-        <div class="report-item">
-          <button
-            class="btn primary report-toggle-btn"
-            data-target-report="salesByBundleOutput"
-            id="generateSalesByBundle"
-          >
-            Generate Sales by Bundle (Last 30 Days)
-          </button>
-          <div id="salesByBundleOutput" class="report-output hidden"></div>
-        </div>
+                <form id="addBundleForm" class="inventory-add-form hidden">
+                    <h4>Add New Meal Bundle</h4>
+                    <div class="form-group">
+                        <label for="newBundleName">Bundle Name:</label>
+                        <input type="text" id="newBundleName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newBundleBasePrice">Base Price (Le):</label>
+                        <input type="number" id="newBundleBasePrice" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newBundleDescription">Description:</label>
+                        <textarea id="newBundleDescription" rows="2" required></textarea>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="newBundleIsActive" checked>
+                        <label for="newBundleIsActive">Is Active</label>
+                    </div>
 
-        <div class="report-item">
-          <button
-            class="btn primary report-toggle-btn"
-            data-target-report="agentPerformanceOutput"
-            id="generateAgentPerformance"
-          >
-            Generate Agent Performance (Last 30 Days)
-          </button>
-          <div id="agentPerformanceOutput" class="report-output hidden"></div>
-        </div>
-      </section>
+                    <h4 class="recipe-heading">Recipe (Ingredients)</h4>
+                    <div id="bundleRecipeInputs">
+                        <!-- Dynamic recipe input rows will be added here -->
+                        <p class="no-recipe-items">No ingredients added yet.</p>
+                    </div>
+                    <div class="form-group add-recipe-item-controls">
+                        <select id="recipeIngredientSelect">
+                            <option value="">Select Ingredient</option>
+                            <!-- Ingredients populated by JS -->
+                        </select>
+                        <input type="number" id="recipeQuantity" step="0.01" placeholder="Quantity" value="0">
+                        <input type="text" id="recipeUnit" placeholder="Unit (e.g., kg)">
+                        <button type="button" class="btn secondary small-btn" id="addRecipeItemBtn">Add Item to Recipe</button>
+                    </div>
+                    <button type="submit" class="btn primary">Add Bundle</button>
+                </form>
 
-      <section id="dashboard-section" class="content-section hidden">
-        <h2>Dashboard Overview</h2>
-        <div class="dashboard-metrics">
-          <div class="metric-card">
-            <h3>Grand Total Sales</h3>
-            <p id="grandTotalSales" class="metric-value">Le 0.00</p>
-          </div>
-          <div class="metric-card">
-            <h3>Total Orders (All Time)</h3>
-            <p id="totalOrdersAllTime" class="metric-value">0</p>
-          </div>
-          <div class="metric-card">
-            <h3>Customers Registered</h3>
-            <p id="totalCustomers" class="metric-value">0</p>
-          </div>
-          <!-- More metrics can be added here -->
-        </div>
-      </section>
+                <form id="addAddOnForm" class="inventory-add-form hidden">
+                    <h4>Add New Add-on Product</h4>
+                    <div class="form-group">
+                        <label for="newAddOnName">Add-on Name:</label>
+                        <input type="text" id="newAddOnName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newAddOnPrice">Price (Le):</label>
+                        <input type="number" id="newAddOnPrice" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newAddOnUnit">Unit:</label>
+                        <input type="text" id="newAddOnUnit" placeholder="e.g., pcs, cup, portion" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newAddOnCurrentStock">Current Stock:</label>
+                        <input type="number" id="newAddOnCurrentStock" step="0.01" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newAddOnUnitCost">Unit Cost (Le, Optional):</label>
+                        <input type="number" id="newAddOnUnitCost" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="newAddOnReorderPoint">Reorder Point (Optional):</label>
+                        <input type="number" id="newAddOnReorderPoint" step="0.01" value="0">
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="newAddOnIsActive" checked>
+                        <label for="newAddOnIsActive">Is Active</label>
+                    </div>
+                    <button type="submit" class="btn primary">Add Add-on</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="reports-section" class="content-section">
+            <h2>Reports</h2>
+            
+            <div class="report-item">
+                <div class="report-controls">
+                    <button class="btn primary report-toggle-btn" data-target-report="dailySummaryOutput" id="generateDailySummary">Generate Daily Summary</button>
+                    <input type="date" id="dailySummaryDateInput" class="date-input">
+                </div>
+                <div id="dailySummaryOutput" class="report-output hidden"></div>
+            </div>
+
+            <div class="report-item">
+                <button class="btn primary report-toggle-btn" data-target-report="salesByBundleOutput" id="generateSalesByBundle">Generate Sales by Bundle (Last 30 Days)</button>
+                <div id="salesByBundleOutput" class="report-output hidden"></div>
+            </div>
+
+            <div class="report-item">
+                <button class="btn primary report-toggle-btn" data-target-report="agentPerformanceOutput" id="generateAgentPerformance">Generate Agent Performance (Last 30 Days)</button>
+                <div id="agentPerformanceOutput" class="report-output hidden"></div>
+            </div>
+        </section>
+
+        <section id="on-the-house-section" class="content-section">
+            <h2>On The House Orders</h2>
+            <p>This section will manage orders given out for free or as complimentary items.</p>
+            <!-- Content for On The House will go here -->
+        </section>
+
+        <section id="workers-section" class="content-section">
+            <h2>Workers Management</h2>
+            <p>This section will manage worker details, roles, and performance.</p>
+            <!-- Content for Workers will go here -->
+        </section>
+
+        <section id="dashboard-section" class="content-section">
+            <h2>Dashboard Overview</h2>
+            <div class="dashboard-metrics">
+                <div class="metric-card">
+                    <h3>Grand Total Sales</h3>
+                    <p id="grandTotalSales" class="metric-value">Le 0.00</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Total Orders (All Time)</h3>
+                    <p id="totalOrdersAllTime" class="metric-value">0</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Customers Registered</h3>
+                    <p id="totalCustomers" class="metric-value">0</p>
+                </div>
+                <!-- More metrics can be added here -->
+            </div>
+        </section>
     </div>
 
     <!-- Customer Details Modal -->
-    <div id="customerDetailsModal" class="modal hidden">
-      <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <h2>Customer Details</h2>
-        <div class="customer-info-display">
-          <p><strong>Name:</strong> <span id="modalCustomerName"></span></p>
-          <p>
-            <strong>WhatsApp:</strong> <span id="modalCustomerWhatsapp"></span>
-          </p>
-          <p>
-            <strong>Address:</strong> <span id="modalCustomerAddress"></span>
-          </p>
-          <p><strong>Email:</strong> <span id="modalCustomerEmail"></span></p>
-          <p>
-            <strong>Total Orders:</strong>
-            <span id="modalCustomerTotalOrders"></span>
-          </p>
-          <p>
-            <strong>Last Order:</strong>
-            <span id="modalCustomerLastOrder"></span>
-          </p>
-        </div>
+    <div id="customerDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Customer Details</h2>
+            <div class="customer-info-display">
+                <p><strong>Name:</strong> <span id="modalCustomerName"></span></p>
+                <p><strong>WhatsApp:</strong> <span id="modalCustomerWhatsapp"></span></p>
+                <p><strong>Address:</strong> <span id="modalCustomerAddress"></span></p>
+                <p><strong>Email:</strong> <span id="modalCustomerEmail"></span></p>
+                <p><strong>Total Orders:</strong> <span id="modalCustomerTotalOrders"></span></p>
+                <p><strong>Last Order:</b> <span id="modalCustomerLastOrder"></span></p>
+            </div>
+            
+            <div class="customer-editable-fields">
+                <h3>Editable Information</h3>
+                <div class="form-group">
+                    <label for="modalEditCustomerName">Name:</label>
+                    <input type="text" id="modalEditCustomerName">
+                </div>
+                <div class="form-group">
+                    <label for="modalEditCustomerWhatsapp">WhatsApp Number:</label>
+                    <input type="tel" id="modalEditCustomerWhatsapp" placeholder="+232 7X XXX XXX">
+                </div>
+                <div class="form-group">
+                    <label for="modalEditCustomerAddress">Delivery Address:</label>
+                    <textarea id="modalEditCustomerAddress" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="modalEditCustomerEmail">Email:</label>
+                    <input type="email" id="modalEditCustomerEmail">
+                </div>
+                <div class="form-group">
+                    <label for="modalCustomerDiscounts">Discounts/Loyalty:</label>
+                    <input type="text" id="modalCustomerDiscounts">
+                </div>
+                <div class="form-group">
+                    <label for="modalCustomerSpecialMessage">Special Message/Notes:</label>
+                    <textarea id="modalCustomerSpecialMessage" rows="3"></textarea>
+                </div>
+                <button class="btn primary" id="saveCustomerDetailsBtn">Save Changes</button>
+            </div>
 
-        <div class="customer-editable-fields">
-          <h3>Editable Information</h3>
-          <div class="form-group">
-            <label for="modalEditCustomerName">Name:</label>
-            <input type="text" id="modalEditCustomerName" />
-          </div>
-          <div class="form-group">
-            <label for="modalEditCustomerWhatsapp">WhatsApp Number:</label>
-            <input
-              type="tel"
-              id="modalEditCustomerWhatsapp"
-              placeholder="+232 7X XXX XXX"
-            />
-          </div>
-          <div class="form-group">
-            <label for="modalEditCustomerAddress">Delivery Address:</label>
-            <textarea id="modalEditCustomerAddress" rows="2"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="modalEditCustomerEmail">Email:</label>
-            <input type="email" id="modalEditCustomerEmail" />
-          </div>
-          <div class="form-group">
-            <label for="modalCustomerDiscounts">Discounts/Loyalty:</label>
-            <input type="text" id="modalCustomerDiscounts" />
-          </div>
-          <div class="form-group">
-            <label for="modalCustomerSpecialMessage"
-              >Special Message/Notes:</label
-            >
-            <textarea id="modalCustomerSpecialMessage" rows="3"></textarea>
-          </div>
-          <button class="btn primary" id="saveCustomerDetailsBtn">
-            Save Changes
-          </button>
-        </div>
+            <h3 class="customer-order-history-title">Order History</h3>
+            <div class="table-container customer-order-history-table">
+                <table id="modalCustomerOrdersTable">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Bundle</th>
+                            <th>Add-ons</th>
+                            <th>Price (Le)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Customer specific orders will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <p id="noCustomerOrdersMessage" style="display: none; text-align: center; color: #777;">No orders found for this customer.</p>
 
-        <h3 class="customer-order-history-title">Order History</h3>
-        <div class="table-container customer-order-history-table">
-          <table id="modalCustomerOrdersTable">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Date</th>
-                <th>Bundle</th>
-                <th>Add-ons</th>
-                <th>Price (Le)</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Customer specific orders will be dynamically inserted here -->
-            </tbody>
-          </table>
         </div>
-        <p
-          id="noCustomerOrdersMessage"
-          style="display: none; text-align: center; color: #777"
-        >
-          No orders found for this customer.
-        </p>
-      </div>
     </div>
 
     <!-- Product Details Modal (for Bundles and Add-ons) -->
-    <div id="productDetailsModal" class="modal hidden">
-      <div class="modal-content">
-        <span class="close-button" id="productModalCloseButton">&times;</span>
-        <h2 id="productModalTitle">Product Details</h2>
-        <div class="product-info-display">
-          <p><strong>Name:</strong> <span id="modalProductName"></span></p>
-          <p><strong>ID:</strong> <span id="modalProductId"></span></p>
-          <p id="productBasePriceP">
-            <strong>Base Price:</strong>
-            <span id="modalProductBasePrice"></span>
-          </p>
-          <p id="productPriceP">
-            <strong>Price:</strong> <span id="modalProductPrice"></span>
-          </p>
-          <p id="productUnitP">
-            <strong>Unit:</strong> <span id="modalProductUnit"></span>
-          </p>
-          <p id="productDescriptionP">
-            <strong>Description:</strong>
-            <span id="modalProductDescription"></span>
-          </p>
-          <p>
-            <strong>Current Stock:</strong>
-            <span id="modalProductCurrentStock"></span>
-          </p>
-          <p>
-            <strong>Unit Cost:</strong> <span id="modalProductUnitCost"></span>
-          </p>
-          <p>
-            <strong>Total Value:</strong>
-            <span id="modalProductTotalValue"></span>
-          </p>
-          <p>
-            <strong>Reorder Point:</strong>
-            <span id="modalProductReorderPoint"></span>
-          </p>
-          <p><strong>Active:</strong> <span id="modalProductActive"></span></p>
+    <div id="productDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="productModalCloseButton">&times;</span>
+            <h2 id="productModalTitle">Product Details</h2>
+            <div class="product-info-display">
+                <p><strong>Name:</strong> <span id="modalProductName"></span></p>
+                <p><strong>ID:</strong> <span id="modalProductId"></span></p>
+                <p id="productBasePriceP"><strong>Base Price:</strong> <span id="modalProductBasePrice"></span></p>
+                <p id="productPriceP"><strong>Price:</strong> <span id="modalProductPrice"></span></p>
+                <p id="productUnitP"><strong>Unit:</strong> <span id="modalProductUnit"></span></p>
+                <p id="productDescriptionP"><strong>Description:</strong> <span id="modalProductDescription"></span></p>
+                <p><strong>Current Stock:</strong> <span id="modalProductCurrentStock"></span></p>
+                <p><strong>Unit Cost:</strong> <span id="modalProductUnitCost"></span></p>
+                <p><strong>Total Value:</strong> <span id="modalProductTotalValue"></span></p>
+                <p><strong>Reorder Point:</strong> <span id="modalProductReorderPoint"></span></p>
+                <p><strong>Active:</strong> <span id="modalProductActive"></span></p>
+            </div>
+
+            <div class="product-editable-fields">
+                <h3>Editable Information</h3>
+                <div class="form-group">
+                    <label for="modalEditProductName">Name:</label>
+                    <input type="text" id="modalEditProductName">
+                </div>
+                <div class="form-group" id="editProductBasePriceGroup">
+                    <label for="modalEditProductBasePrice">Base Price (Le):</label>
+                    <input type="number" id="modalEditProductBasePrice" step="0.01">
+                </div>
+                <div class="form-group" id="editProductPriceGroup">
+                    <label for="modalEditProductPrice">Price (Le):</label>
+                    <input type="number" id="modalEditProductPrice" step="0.01">
+                </div>
+                <div class="form-group" id="editProductUnitGroup">
+                    <label for="modalEditProductUnit">Unit:</label>
+                    <input type="text" id="modalEditProductUnit">
+                </div>
+                <div class="form-group" id="editProductDescriptionGroup">
+                    <label for="modalEditProductDescription">Description:</label>
+                    <textarea id="modalEditProductDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group" id="editProductCurrentStockGroup">
+                    <label for="modalEditProductCurrentStock">Current Stock:</label>
+                    <input type="number" id="modalEditProductCurrentStock" step="0.01">
+                </div>
+                 <div class="form-group" id="editProductUnitCostGroup">
+                    <label for="modalEditProductUnitCost">Unit Cost (Le):</label>
+                    <input type="number" id="modalEditProductUnitCost" step="0.01">
+                </div>
+                <div class="form-group" id="editProductReorderPointGroup">
+                    <label for="modalEditProductReorderPoint">Reorder Point:</label>
+                    <input type="number" id="modalEditProductReorderPoint" step="0.01">
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="modalEditProductActive">
+                    <label for="modalEditProductActive">Is Active</label>
+                </div>
+                
+                <h4 id="bundleRecipeTitle" style="display:none;">Bundle Recipe (Ingredients & Quantities)</h4>
+                <div id="modalProductRecipe" class="bundle-recipe-display" style="display:none;">
+                    <!-- Recipe details will be inserted here -->
+                </div>
+
+                <button class="btn primary" id="saveProductDetailsBtn">Save Changes</button>
+            </div>
+
+            <h3 class="product-order-history-title">Orders Containing This Product</h3>
+            <div class="table-container product-order-history-table">
+                <table id="modalProductOrdersTable">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Customer Name</th>
+                            <th>Total Price (Le)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Product specific orders will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <p id="noProductOrdersMessage" style="display: none; text-align: center; color: #777;">No orders found for this product.</p>
         </div>
-
-        <div class="product-editable-fields">
-          <h3>Editable Information</h3>
-          <div class="form-group">
-            <label for="modalEditProductName">Name:</label>
-            <input type="text" id="modalEditProductName" />
-          </div>
-          <div class="form-group" id="editProductBasePriceGroup">
-            <label for="modalEditProductBasePrice">Base Price (Le):</label>
-            <input type="number" id="modalEditProductBasePrice" step="0.01" />
-          </div>
-          <div class="form-group" id="editProductPriceGroup">
-            <label for="modalEditProductPrice">Price (Le):</label>
-            <input type="number" id="modalEditProductPrice" step="0.01" />
-          </div>
-          <div class="form-group" id="editProductUnitGroup">
-            <label for="modalEditProductUnit">Unit:</label>
-            <input type="text" id="modalEditProductUnit" />
-          </div>
-          <div class="form-group" id="editProductDescriptionGroup">
-            <label for="modalEditProductDescription">Description:</label>
-            <textarea id="modalEditProductDescription" rows="3"></textarea>
-          </div>
-          <div class="form-group" id="editProductCurrentStockGroup">
-            <label for="modalEditProductCurrentStock">Current Stock:</label>
-            <input
-              type="number"
-              id="modalEditProductCurrentStock"
-              step="0.01"
-            />
-          </div>
-          <div class="form-group" id="editProductUnitCostGroup">
-            <label for="modalEditProductUnitCost">Unit Cost (Le):</label>
-            <input type="number" id="modalEditProductUnitCost" step="0.01" />
-          </div>
-          <div class="form-group" id="editProductReorderPointGroup">
-            <label for="modalEditProductReorderPoint">Reorder Point:</label>
-            <input
-              type="number"
-              id="modalEditProductReorderPoint"
-              step="0.01"
-            />
-          </div>
-          <div class="form-group checkbox-group">
-            <input type="checkbox" id="modalEditProductActive" />
-            <label for="modalEditProductActive">Is Active</label>
-          </div>
-
-          <h4 id="bundleRecipeTitle" style="display: none">
-            Bundle Recipe (Ingredients & Quantities)
-          </h4>
-          <div
-            id="modalProductRecipe"
-            class="bundle-recipe-display"
-            style="display: none"
-          >
-            <!-- Recipe details will be inserted here -->
-          </div>
-
-          <button class="btn primary" id="saveProductDetailsBtn">
-            Save Changes
-          </button>
-        </div>
-
-        <h3 class="product-order-history-title">
-          Orders Containing This Product
-        </h3>
-        <div class="table-container product-order-history-table">
-          <table id="modalProductOrdersTable">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Date</th>
-                <th>Customer Name</th>
-                <th>Total Price (Le)</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Product specific orders will be dynamically inserted here -->
-            </tbody>
-          </table>
-        </div>
-        <p
-          id="noProductOrdersMessage"
-          style="display: none; text-align: center; color: #777"
-        >
-          No orders found for this product.
-        </p>
-      </div>
     </div>
 
     <!-- Stock Update Modal -->
-    <div id="stockUpdateModal" class="modal hidden">
-      <div class="modal-content">
-        <span class="close-button" id="stockModalCloseButton">&times;</span>
-        <h2 id="stockModalTitle">Update Stock</h2>
-        <div class="stock-info-display">
-          <p><strong>Item:</strong> <span id="stockModalItemName"></span></p>
-          <p>
-            <strong>Current Stock:</strong>
-            <span id="stockModalCurrentStock"></span>
-            <span id="stockModalUnit"></span>
-          </p>
-          <p id="stockModalUnitCostP">
-            <strong>Last Unit Cost:</strong>
-            <span id="stockModalUnitCost"></span>
-          </p>
-          <p id="stockModalTotalValueP">
-            <strong>Current Total Value:</strong>
-            <span id="stockModalTotalValue"></span>
-          </p>
-        </div>
+    <div id="stockUpdateModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="stockModalCloseButton">&times;</span>
+            <h2 id="stockModalTitle">Update Stock</h2>
+            <div class="stock-info-display">
+                <p><strong>Item:</strong> <span id="stockModalItemName"></span></p>
+                <p><strong>Current Stock:</strong> <span id="stockModalCurrentStock"></span> <span id="stockModalUnit"></span></p>
+                <p id="stockModalUnitCostP"><strong>Last Unit Cost:</strong> <span id="stockModalUnitCost"></span></p>
+                <p id="stockModalTotalValueP"><strong>Current Total Value:</strong> <span id="stockModalTotalValue"></span></p>
+            </div>
 
-        <div class="stock-editable-fields">
-          <h3>Stock Adjustment</h3>
-          <div class="form-group">
-            <label for="stockAdjustmentType">Adjustment Type:</label>
-            <select id="stockAdjustmentType">
-              <option value="restock">Restock (Increase)</option>
-              <option value="consumption">Consumption (Decrease)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="stockQuantityChange">Quantity Change:</label>
-            <input
-              type="number"
-              id="stockQuantityChange"
-              step="0.01"
-              value="0"
-              required
-            />
-          </div>
-          <div class="form-group" id="newUnitCostGroup">
-            <label for="newUnitCost">New Unit Cost (Le, for Restock):</label>
-            <input
-              type="number"
-              id="newUnitCost"
-              step="0.01"
-              placeholder="Enter cost per unit for restock"
-            />
-          </div>
-          <p
-            class="form-note"
-            id="estimatedRestockValueNote"
-            style="display: none"
-          >
-            Estimated Restock Value:
-            <strong id="estimatedRestockValue">Le 0.00</strong>
-          </p>
-          <button class="btn primary" id="saveStockUpdateBtn">
-            Update Stock
-          </button>
+            <div class="stock-editable-fields">
+                <h3>Stock Adjustment</h3>
+                <div class="form-group">
+                    <label for="stockAdjustmentType">Adjustment Type:</label>
+                    <select id="stockAdjustmentType">
+                        <option value="restock">Restock (Increase)</option>
+                        <option value="consumption">Consumption (Decrease)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="stockQuantityChange">Quantity Change:</label>
+                    <input type="number" id="stockQuantityChange" step="0.01" value="0" required>
+                </div>
+                <div class="form-group" id="newUnitCostGroup">
+                    <label for="newUnitCost">New Unit Cost (Le, for Restock):</label>
+                    <input type="number" id="newUnitCost" step="0.01" placeholder="Enter cost per unit for restock">
+                </div>
+                <p class="form-note" id="estimatedRestockValueNote" style="display:none;">Estimated Restock Value: <strong id="estimatedRestockValue">Le 0.00</strong></p>
+                <button class="btn primary" id="saveStockUpdateBtn">Update Stock</button>
+            </div>
         </div>
-      </div>
     </div>
 
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-  </body>
+</body>
 </html>
